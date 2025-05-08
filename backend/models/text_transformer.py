@@ -3,15 +3,18 @@ from typing import Optional, Dict, Any, List
 
 import openai
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
+from ibm_watsonx_ai.foundation_models.utils.enums import ModelType
+from ibm_watsonx_ai.foundation_models import ModelInference
+from ibm_watsonx_ai import Credentials
+import json
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = "gpt-4o-mini"
-MAX_TOKENS = 200
-PROMPT = """
+credentials = {
+    "url"    : "https://us-south.ml.cloud.ibm.com",
+    "api_key" : "" # Typically there is an API key you have to input here to use but we don't need it in CloudIDE
+}
+model_id = "ibm/granite-3-8b-instruct"
+prompt = """
 You are a toxicity filter. 
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
@@ -23,40 +26,33 @@ It should fit the sentence structure and form of the original text.
 The capitalization should be consistent with original text
 It should also be whimsical, creative and fun.
 Get creative with it. You can make allusions, analogies and puns.
+NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT.
 
 For example:
 
 Original: "You are horrible"
 Transformed: "You are lovely!"
-
-***
-NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT.
 """
 
 
 class TextTransformer:
     def __init__(
         self,
-        api_key: str = OPENAI_API_KEY,
-        model: str = OPENAI_MODEL,
-        max_tokens: int = MAX_TOKENS,
-        prompt: str = PROMPT
+        credentials: Credentials = credentials,
+        model: str = model_id,
+        prompt: str = prompt,
+        max_tokens: int = 150,
+        project_id: str = "skills-network"
     ):
-        self.api_key = api_key
+        model = ModelInference(
+            model_id=model_id,
+            credentials=credentials,
+            project_id=project_id,
+            params={"max_tokens": max_tokens},
+        )
+
         self.model = model
-        self.max_tokens = max_tokens
         self.prompt = prompt
-        self._client = None
-        self._initialize_client()
-        
-    def _initialize_client(self):
-        if not self.api_key:
-            raise ValueError("OpenAI API key is required")
-        
-        try:
-            self._client = OpenAI(api_key=self.api_key)
-        except Exception as e:
-            raise
     
     def transform_text(
         self,
@@ -68,16 +64,18 @@ class TextTransformer:
         
         try:
 
-            response = self._client.chat.completions.create(
-                model=self.model,
+            response = self.model.chat(
                 messages=[
-                    {"role": "system", "content": self.prompt},
-                    {"role": "user", "content": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
-                ],
-                max_tokens=self.max_tokens,
-                temperature=0.5
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "text", "text": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
+                        ],
+                    }
+                ]
             )
-            return response.choices[0].message.content.strip()
+            return response['choices'][0]['message']['content'].strip()
         except Exception as e:
             return "Error transforming text"
 
