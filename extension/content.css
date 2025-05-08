@@ -1,0 +1,11 @@
+.toxicity-filter-transformed {
+    background-color: rgba(144, 238, 144, 0.2); /* Light green background */
+    border-radius: 3px;
+    padding: 2px 4px;
+    transition: background-color 0.3s ease;
+}
+
+.toxicity-filter-transformed:hover {
+    background-color: rgba(144, 238, 144, 0.4); /* Darker green on hover */
+    cursor: help;
+} 
