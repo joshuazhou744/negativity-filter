@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
-from processor import *
+from processor import process_text
 
 app = FastAPI()
 
