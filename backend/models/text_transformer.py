@@ -12,12 +12,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = "gpt-4o-mini"
 MAX_TOKENS = 200
 PROMPT = """
-You are a toxicity filter. Given text either with context or independently,
-you will transform the text into a positive alternative.
+You are a toxicity filter. 
+You are given text either with context or independently,
+You will transform the text into a positive alternative.
 
-You will only respond with the transformed text, nothing else.
+You will only respond with the pure transformed text, nothing else. Don't put "Transformed text:" or anything like that in the response.
 
 The transformed text should be grammatically correct within the context.
+It should fit the sentence structure and form of the original text.
+The capitalization should be consistent with original text
 It should also be whimsical, creative and fun.
 Get creative with it. You can make allusions, analogies and puns.
 
@@ -76,14 +79,7 @@ class TextTransformer:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            print(f"Error transforming text: {e}")
-            return ""
-    
-    def transform_text_with_context(self, toxic_text: str, context: str) -> str:
-        return self.transform_text(toxic_text, context)
-    
-    def transform_text_independently(self, toxic_text: str) -> str:
-        return self.transform_text(toxic_text)
+            return "Error transforming text"
 
 def get_text_transformer() -> TextTransformer:
     return TextTransformer()
