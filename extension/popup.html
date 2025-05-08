@@ -4,173 +4,25 @@
     <title>Toxicity Filter</title>
     <style>
         body {
-            width: 300px;
-            padding: 15px;
-            font-family: Arial, sans-serif;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .header img {
-            width: 32px;
-            height: 32px;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-
-        .status {
+            width: 200px;
             padding: 10px;
-            border-radius: 5px;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #ccc;
-        }
-
-        .status-indicator.active {
-            background-color: #4CAF50;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .button {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
+        button {
+            width: 100%;
+            padding: 8px;
             background-color: #4CAF50;
             color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
-
-        .button:hover {
+        button:hover {
             background-color: #45a049;
-        }
-
-        .button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .settings {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 20px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #4CAF50;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <img src="icons/icon48.png" alt="Toxicity Filter">
-            <h1>Toxicity Filter</h1>
-        </div>
-
-        <div class="status">
-            <div class="status-indicator" id="statusIndicator"></div>
-            <span id="statusText">Checking connection...</span>
-        </div>
-
-        <div class="controls">
-            <button class="button" id="scanButton">Scan Current Page</button>
-            <button class="button" id="clearButton">Clear Transformations</button>
-        </div>
-
-        <div class="settings">
-            <div class="setting-item">
-                <span>Auto-scan on load</span>
-                <label class="switch">
-                    <input type="checkbox" id="autoScanToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="setting-item">
-                <span>Highlight transformed text</span>
-                <label class="switch">
-                    <input type="checkbox" id="highlightToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-    </div>
+    <button id="scanButton">Scan Page</button>
     <script src="popup.js"></script>
 </body>
 </html> 

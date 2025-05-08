@@ -31,40 +31,30 @@ function updateStatus() {
     scanButton.disabled = !isConnected;
 }
 
-// Send message to content script
-async function sendMessageToContentScript(message) {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-        chrome.tabs.sendMessage(tab.id, message);
-    }
-}
-
-// Event Listeners
-scanButton.addEventListener('click', () => {
-    sendMessageToContentScript({ action: 'scan' });
-});
-
-clearButton.addEventListener('click', () => {
-    sendMessageToContentScript({ action: 'clear' });
-});
-
-autoScanToggle.addEventListener('change', (e) => {
-    sendMessageToContentScript({
-        action: 'updateSettings',
-        settings: { autoScan: e.target.checked }
-    });
-});
-
-highlightToggle.addEventListener('change', (e) => {
-    sendMessageToContentScript({
-        action: 'updateSettings',
-        settings: { highlight: e.target.checked }
-    });
-});
-
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    checkConnection();
-    // Check connection every 30 seconds
-    setInterval(checkConnection, 30000);
-}); 
+    const scanButton = document.getElementById('scanButton');
+    
+    scanButton.addEventListener('click', async () => {
+        try {
+            // Get the active tab
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            // Check if we can inject scripts into this page
+            if (tab.url.startsWith('chrome://')) {
+                console.error('Cannot scan chrome:// pages');
+                return;
+            }
+            
+            // Inject the content script if it's not already there
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ['content.js']
+            });
+            
+            // Send message to content script to scan the page
+            chrome.tabs.sendMessage(tab.id, { action: 'scan' });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});

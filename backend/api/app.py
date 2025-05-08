@@ -10,3 +10,7 @@ app = FastAPI()
 @app.get("/transform-text")
 async def transform_text(text: str):
     return process_text(text)
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
