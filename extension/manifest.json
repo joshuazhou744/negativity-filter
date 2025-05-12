@@ -5,7 +5,11 @@
   "description": "Filters toxic content and replaces it with positive alternatives",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -17,11 +21,18 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": [
-        "content.js"
-      ],
-      "run_at": "document_end"
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["libs/axios.min.js", "content.js"],
+      "run_at": "document_idle"
     }
-  ]
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 } 

@@ -6,9 +6,9 @@ from typing import Dict, Any, Tuple, Optional
 from models.text_transformer import get_text_transformer
 from models.toxicity_detector import get_toxicity_detector
 
-def process_text(text: str) -> str:
+def process_text(text: str) -> Tuple[str, bool]:
     if not text or not text.strip():
-        return text
+        return text, False
     
     text_transformer = get_text_transformer()
     toxicity_detector = get_toxicity_detector()
@@ -18,14 +18,14 @@ def process_text(text: str) -> str:
     scores = toxicity_detector._format_scores(scores)
     
     if not is_toxic:
-        return text
+        return text, False
         
     transformed_text = text_transformer.transform_text(text)
     
     if not transformed_text:
-        return text
+        return text, False
         
-    return transformed_text
+    return transformed_text, True
 
 def test_process_text():
     if len(sys.argv) != 2:

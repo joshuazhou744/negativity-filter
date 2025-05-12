@@ -1,16 +1,35 @@
+// popup.js
+
 // Configuration
 const BACKEND_URL = 'http://localhost:8000';
+const SCAN_TIMEOUT = 30000; // 30 second timeout
+
 
 // DOM Elements
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 const scanButton = document.getElementById('scanButton');
-const clearButton = document.getElementById('clearButton');
-const autoScanToggle = document.getElementById('autoScanToggle');
-const highlightToggle = document.getElementById('highlightToggle');
 
 // State
 let isConnected = false;
+let fallbackTimer = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkConnection();
+
+    // React to content-script events
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.action === 'scan-started') {
+            updateButtonState(true);
+        }
+        if (msg.action === 'scan-finished') {
+            clearTimeout(fallbackTimer);
+            updateButtonState(false);
+        }
+    });
+
+    scanButton.addEventListener('click', startScan);
+});
 
 // Check backend connection
 async function checkConnection() {
@@ -31,30 +50,44 @@ function updateStatus() {
     scanButton.disabled = !isConnected;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const scanButton = document.getElementById('scanButton');
-    
-    scanButton.addEventListener('click', async () => {
-        try {
-            // Get the active tab
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            // Check if we can inject scripts into this page
-            if (tab.url.startsWith('chrome://')) {
-                console.error('Cannot scan chrome:// pages');
-                return;
-            }
-            
-            // Inject the content script if it's not already there
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ['content.js']
-            });
-            
-            // Send message to content script to scan the page
-            chrome.tabs.sendMessage(tab.id, { action: 'scan' });
-        } catch (error) {
-            console.error('Error:', error);
+// Update button state based on scanning status
+function updateButtonState(scanning) {
+    scanButton.disabled = scanning || !isConnected;
+    scanButton.textContent = scanning ? 'Scanning...' : 'Scan Page';
+}
+
+async function startScan() {
+    if (scanButton.disabled) return;
+
+    // Immediately disable & change text
+    updateButtonState(true);
+
+    // Fallback in case no finish message ever comes
+    fallbackTimer = setTimeout(() => {
+        updateButtonState(false);
+    }, SCAN_TIMEOUT);
+
+    try {
+        const [tab] = await chrome.tabs.query({
+        active: true, currentWindow: true
+        });
+
+        if (tab.url.startsWith('chrome://')) {
+        alert('Cannot scan chrome:// pages');
+        clearTimeout(fallbackTimer);
+        updateButtonState(false);
+        return;
         }
-    });
-});
+
+        // Fire-and-forget: content.js will send scan-started/scan-finished
+        chrome.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
+            // swallow any “no listener” errors silently
+            if (chrome.runtime.lastError) return;
+        });
+
+    } catch (err) {
+        console.error('Popup error:', err);
+        clearTimeout(fallbackTimer);
+        updateButtonState(false);
+    }
+}

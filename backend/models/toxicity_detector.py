@@ -4,7 +4,7 @@ from typing import Dict, Any, Tuple, List, Optional
 
 from detoxify import Detoxify
 
-TOXICITY_THRESHOLD = 0.7
+TOXICITY_THRESHOLD = 0.6
 
 class ToxicityDetector:
     def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):

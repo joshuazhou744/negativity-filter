@@ -11,7 +11,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = "gpt-4o-mini"
 MAX_TOKENS = 200
-PROMPT = """
+SYSTEM_PROMPT = """
 You are a toxicity filter. 
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
@@ -20,7 +20,8 @@ You will only respond with the pure transformed text, nothing else. Don't put "T
 
 The transformed text should be grammatically correct within the context.
 It should fit the sentence structure and form of the original text.
-The capitalization should be consistent with original text
+The capitalization should be consistent with original text.
+There should only be punctuation if there was punctuation in the original text.
 It should also be whimsical, creative and fun.
 Get creative with it. You can make allusions, analogies and puns.
 
@@ -31,6 +32,7 @@ Transformed: "You are lovely!"
 
 ***
 NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT.
+DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR ANYTHING LIKE THAT.
 """
 
 
@@ -40,12 +42,12 @@ class TextTransformer:
         api_key: str = OPENAI_API_KEY,
         model: str = OPENAI_MODEL,
         max_tokens: int = MAX_TOKENS,
-        prompt: str = PROMPT
+        system_prompt: str = SYSTEM_PROMPT
     ):
         self.api_key = api_key
         self.model = model
         self.max_tokens = max_tokens
-        self.prompt = prompt
+        self.system_prompt = system_prompt
         self._client = None
         self._initialize_client()
         
@@ -71,7 +73,7 @@ class TextTransformer:
             response = self._client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.prompt},
+                    {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
                 ],
                 max_tokens=self.max_tokens,
