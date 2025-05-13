@@ -9,6 +9,7 @@ const SCAN_TIMEOUT = 30000; // 30 second timeout
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 const scanButton = document.getElementById('scanButton');
+const clearButton = document.getElementById('clearButton');
 
 // State
 let isConnected = false;
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     scanButton.addEventListener('click', startScan);
+    clearButton.addEventListener('click', clearConsole);
 });
 
 // Check backend connection
@@ -81,7 +83,7 @@ async function startScan() {
 
         // Fire-and-forget: content.js will send scan-started/scan-finished
         chrome.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
-            // swallow any “no listener” errors silently
+            // swallow any "no listener" errors silently
             if (chrome.runtime.lastError) return;
         });
 
@@ -89,5 +91,23 @@ async function startScan() {
         console.error('Popup error:', err);
         clearTimeout(fallbackTimer);
         updateButtonState(false);
+    }
+}
+
+async function clearConsole() {
+    try {
+        const [tab] = await chrome.tabs.query({
+            active: true, currentWindow: true
+        });
+        
+        if (tab.url.startsWith('chrome://')) {
+            return;
+        }
+        
+        chrome.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
+            if (chrome.runtime.lastError) return;
+        });
+    } catch (err) {
+        console.error('Error clearing console:', err);
     }
 }

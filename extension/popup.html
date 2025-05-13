@@ -31,22 +31,34 @@
         button {
             width: 100%;
             padding: 8px;
-            background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
+        #scanButton {
+            background-color: #4CAF50;
+            margin-bottom: 10px;
+        }
         
-        button:hover:not(:disabled) {
+        #scanButton:hover:not(:disabled) {
             background-color: #45a049;
         }
         
-        button:disabled {
+        #scanButton:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
             opacity: 0.7;
+        }
+
+        #clearButton {
+            background-color: #f44336;
+        }
+
+        #clearButton:hover:not(:disabled) {
+            background-color: #d32f2f;
         }
     </style>
 </head>
@@ -56,6 +68,7 @@
         <span id="statusText">Checking connection...</span>
     </div>
     <button id="scanButton">Scan Page</button>
+    <button id="clearButton">Clear Console</button>
     <script src="popup.js"></script>
 </body>
 </html> 

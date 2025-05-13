@@ -28,17 +28,14 @@ chrome.runtime.onMessage.addListener((request) => {
             })
             .catch(error => console.error('Scan error:', error))
             .finally(() => scanning = false);
-    }
-});
-
-chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === 'reset') {
+    } else if (request.action === 'reset') {
         index = 0;
         seen.clear();
         console.log('Reset index and seen set');
+    } else if (request.action === 'clear-console') {
+        console.clear();
     }
 });
-
 // Main scanning function
 async function scanPage() {
     console.clear();
