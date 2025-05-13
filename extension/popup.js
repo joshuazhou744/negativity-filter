@@ -103,7 +103,7 @@ async function clearConsole() {
         if (tab.url.startsWith('chrome://')) {
             return;
         }
-        
+
         chrome.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
             if (chrome.runtime.lastError) return;
         });

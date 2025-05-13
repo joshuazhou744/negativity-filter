@@ -3,10 +3,16 @@
 // Configuration
 const BACKEND_URL = 'http://localhost:8000';
 const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
-const MAX_ELEMENTS = 300;
+const MAX_ELEMENTS = 100;
+const DISCOVERY_INTERVAL = 1000; // 1 second
+
+// State
 const seen = new Set();
+const allElementsToProcess = [];
 let scanning = false;
+let discovering = false;
 let index = 0;
+let discoveryTimer = null;
 
 if (window.__toxicityFilterInjected) {
     console.log("Toxicity filter already injected");
@@ -20,6 +26,11 @@ chrome.runtime.onMessage.addListener((request) => {
         scanning = true;
         chrome.runtime.sendMessage({ action: 'scan-started' });
         
+        // Ensure we have the latest elements
+        if (!discovering) {
+            startElementDiscovery();
+        }
+        
         // Run scan and handle completion
         scanPage()
             .then(() => {
@@ -29,24 +40,110 @@ chrome.runtime.onMessage.addListener((request) => {
             .catch(error => console.error('Scan error:', error))
             .finally(() => scanning = false);
     } else if (request.action === 'reset') {
+        // Reset our state
         index = 0;
         seen.clear();
-        console.log('Reset index and seen set');
+        allElementsToProcess.length = 0; // Clear the array
+        
+        // Restart discovery
+        stopElementDiscovery();
+        startElementDiscovery();
+        
+        console.log('Reset index and element tracking');
     } else if (request.action === 'clear-console') {
         console.clear();
     }
 });
+
+// Background task for element discovery
+function startElementDiscovery() {
+    if (discovering) return;
+    
+    discovering = true;
+    console.log('Starting element discovery');
+    
+    // Initial discovery
+    discoverElements();
+    
+    // Set up periodic discovery
+    discoveryTimer = setInterval(discoverElements, DISCOVERY_INTERVAL);
+}
+
+function stopElementDiscovery() {
+    if (discoveryTimer) {
+        clearInterval(discoveryTimer);
+        discoveryTimer = null;
+    }
+    discovering = false;
+    console.log('Stopped element discovery');
+}
+
+function discoverElements() {
+    const body = document.body;
+    if (!body) return;
+    
+    // Get all elements and filter them immediately
+    const newElements = Array.from(body.querySelectorAll(TEXT_SELECTORS))
+        .filter(element => {
+            // Generate a unique identifier for this element
+            const elementId = element.tagName + 
+                              (element.id ? '#' + element.id : '') + 
+                              (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
+                              ':' + element.textContent.trim().substring(0, 20);
+            
+            // Skip if we've already seen this element
+            if (seen.has(elementId)) {
+                return false;
+            }
+            
+            // Skip elements with children (non-leaf nodes)
+            if (element.children.length > 0) {
+                return false;
+            }
+            
+            // Skip hidden elements
+            const style = window.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden') {
+                seen.add(elementId); // Mark as seen even if we're skipping
+                return false;
+            }
+            
+            // Skip empty elements
+            const text = element.textContent.trim().replace(/\s+/g, ' ');
+            if (!text) {
+                seen.add(elementId); // Mark as seen even if we're skipping
+                return false;
+            }
+            
+            // Mark as seen and keep
+            seen.add(elementId);
+            return true;
+        });
+    
+    if (newElements.length > 0) {
+        console.log(`Discovered ${newElements.length} new elements to process`);
+        allElementsToProcess.push(...newElements);
+    }
+}
+
 // Main scanning function
 async function scanPage() {
     console.clear();
     
-    // Find elements to scan
-    const body = document.body;
-    if (!body) return 0;
+    // Ensure we have elements to scan
+    if (allElementsToProcess.length === 0) {
+        console.log('No elements to scan. Discovering...');
+        discoverElements();
+        
+        if (allElementsToProcess.length === 0) {
+            console.log('Still no elements found to scan');
+            return 0;
+        }
+    }
     
-    const allElements = Array.from(body.querySelectorAll(TEXT_SELECTORS));
-    const elements = allElements.slice(index, index + MAX_ELEMENTS);
-    console.log(`Found ${elements.length} elements to scan (starting at index ${index}, total on page: ${allElements.length})`);
+    // Get the next batch of elements to process
+    const elements = allElementsToProcess.slice(index, index + MAX_ELEMENTS);
+    console.log(`Processing ${elements.length} elements (starting at index ${index}, total discovered: ${allElementsToProcess.length})`);
 
     let processed = 0;
     let sentenceCount = 0;
@@ -58,26 +155,12 @@ async function scanPage() {
         
         // Process all elements in current batch
         await Promise.all(batch.map(async (element) => {
-            // Skip elements that aren't good candidates
-            if (element.children.length > 0) {
-                return;
-            }
-            
-            const style = window.getComputedStyle(element);
-            if (style.display === 'none' || style.visibility === 'hidden') {
+            // Skip if the element is no longer in the DOM
+            if (!element.isConnected) {
                 return;
             }
             
             const text = element.textContent.trim().replace(/\s+/g, ' ');
-            if (!text) {
-                return;
-            }
-            
-            if (seen.has(text)) {
-                return;
-            }
-            
-            seen.add(text);
             processed++;
             
             // Process text by sentences
@@ -116,7 +199,7 @@ async function scanPage() {
             }
             
             // Update element if toxic content was found
-            if (hasToxic) {
+            if (hasToxic && element.isConnected) {
                 elementsWithToxic++;
                 element.textContent = newText.trim();
                 element.classList.add('toxic-filtered');
@@ -133,6 +216,9 @@ async function scanPage() {
     
     return sentenceCount;
 }
+
+// Start the element discovery as soon as the script loads
+window.addEventListener('load', startElementDiscovery);
 
 const style = document.createElement('style');
 style.textContent = `
