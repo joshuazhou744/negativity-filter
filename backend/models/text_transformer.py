@@ -3,15 +3,16 @@ from typing import Optional, Dict, Any, List
 
 import openai
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
+from ibm_watsonx_ai import Credentials, APIClient
+from ibm_watsonx_ai.foundation_models import ModelInference
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = "gpt-4o-mini"
-MAX_TOKENS = 200
-SYSTEM_PROMPT = """
+credentials = Credentials(
+    url = "https://us-south.ml.cloud.ibm.com"
+)
+model_id = "ibm/granite-3-3-8b-instruct"
+project_id = "skills-network"
+system_prompt = """
 You are a toxicity filter. 
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
@@ -39,49 +40,64 @@ DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR
 class TextTransformer:
     def __init__(
         self,
-        api_key: str = OPENAI_API_KEY,
-        model: str = OPENAI_MODEL,
-        max_tokens: int = MAX_TOKENS,
-        system_prompt: str = SYSTEM_PROMPT
+        credentials: Credentials = credentials,
+        model_id: str = "ibm/granite-3-3-8b-instruct",
+        project_id: str = project_id,
+        system_prompt: str = system_prompt,
+        max_tokens: int = 300
     ):
-        self.api_key = api_key
-        self.model = model
-        self.max_tokens = max_tokens
+        self.credentials = credentials
+        self.project_id = project_id
         self.system_prompt = system_prompt
+        self.max_tokens = max_tokens
         self._client = None
         self._initialize_client()
         
     def _initialize_client(self):
-        if not self.api_key:
-            raise ValueError("OpenAI API key is required")
+        if not self.credentials:
+            raise ValueError("Credentials are required")
         
         try:
-            self._client = OpenAI(api_key=self.api_key)
+            self._client = APIClient(credentials)
         except Exception as e:
             raise
     
     def transform_text(
         self,
-        toxic_text: str,
-        context: Optional[str] = None,
+        toxic_text: str
     ) -> str:
         if not toxic_text or not toxic_text.strip():
             return ""
         
         try:
-
-            response = self._client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
-                ],
-                max_tokens=self.max_tokens,
-                temperature=0.5
+            model = ModelInference(
+                model_id=self.model_id,
+                credentials=self.credentials,
+                project_id=self.project_id,
+                params={"max_tokens": 300},
             )
-            return response.choices[0].message.content.strip()
+
+            response = model.chat(
+                messages = [
+                    {
+                        "role":"system",
+                        "content": [
+                            {"type": "text", "text": self.system_prompt}
+                        ]
+                    },
+                    {
+                        "role":"user",
+                        "content": [
+                            {"type": "text", "text": f"Original text: {toxic_text}"}
+                        ]
+                    }
+                ]
+            )
+            print(response)
+            transformed_text = response['choices'][0]['message']['content']
+            return transformed_text.strip()
         except Exception as e:
             return "Error transforming text"
 
 def get_text_transformer() -> TextTransformer:
-    return TextTransformer()
+    return TextTransformer(credentials=credentials, project_id=project_id, system_prompt=system_prompt)
