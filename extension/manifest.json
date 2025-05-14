@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Toxicity Filter",
   "version": "1.0",
-  "description": "Filters toxic content and replaces it with positive alternatives",
+  "description": "Filters negative text and replaces it with positive alternatives",
   "permissions": [
     "activeTab",
     "scripting",

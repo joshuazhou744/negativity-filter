@@ -1,37 +1,37 @@
 // popup.js
 // handles the popup UI and interactions with page and backend
 
-// Configuration
+// configuration
 const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';
 const SCAN_TIMEOUT = 30000; // 30 second timeout
 const CONNECTION_CHECK_INTERVAL = 10000; // Check connection every 10 seconds
 
-// DOM Elements
+// DOM elements
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 const scanButton = document.getElementById('scanButton');
 const clearButton = document.getElementById('clearButton');
 
-// State
+// states
 let isConnected = false;
-let connectionCheckTimer = null;
 let isScanning = false;
+let connectionCheckTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initially disable the scan button until we check connection
+    // initially disable the scan button until connection is established
     scanButton.disabled = true;
     
-    // Check if we were previously scanning (persists if popup closes)
+    // check if we were previously scanning (persists if popup closes)
     chrome.storage.local.get(['isScanning'], (result) => {
         isScanning = result.isScanning || false;
         
-        // If active scan, check how long it's been running
+        // if active scan, check how long it's been running
         if (isScanning) {
             chrome.storage.local.get(['scanStartTime'], (timeResult) => {
                 const scanStartTime = timeResult.scanStartTime || 0;
                 const timeElapsed = Date.now() - scanStartTime;
                 
-                // If it's been longer than the timeout, assume scan finished or failed
+                // if it's been longer than the timeout, assume scan finished or failed
                 if (timeElapsed > SCAN_TIMEOUT) {
                     isScanning = false;
                     chrome.storage.local.set({ isScanning: false });
@@ -42,13 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Initial connection check
+    // initial connection check
     checkConnection();
     
-    // Set up periodic connection checking
+    // set up periodic connection checking
     connectionCheckTimer = setInterval(checkConnection, CONNECTION_CHECK_INTERVAL);
 
-    // React to content-script events
+    // content-script events
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'scan-started') {
             isScanning = true;
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearButton.addEventListener('click', clearConsole);
 });
 
-// Check backend connection
+// check backend connection
 async function checkConnection() {
     try {
         const response = await fetch(`${BACKEND_URL}/health`);
@@ -81,16 +81,16 @@ async function checkConnection() {
     }
 }
 
-// Update status UI
+// update status UI
 function updateStatus() {
     statusIndicator.classList.toggle('active', isConnected);
     statusText.textContent = isConnected ? 'Connected to backend' : 'Backend not available';
     
-    // Update button state based on connection and scanning status
+    // update button state based on backend connection
     updateButtonState(isScanning);
 }
 
-// Update button state based on scanning status
+// update button state based on scanning status
 function updateButtonState(scanning) {
     scanButton.disabled = scanning || !isConnected;
     if (scanning) {
@@ -103,10 +103,10 @@ function updateButtonState(scanning) {
 }
 
 async function startScan() {
-    // Double-check connection before scanning
+    // double-check connection and button status before scanning
     if (!isConnected || scanButton.disabled) return;
 
-    // Immediately disable & change text
+    // set scanning states
     isScanning = true;
     chrome.storage.local.set({ 
         isScanning: true,
@@ -119,6 +119,7 @@ async function startScan() {
             active: true, currentWindow: true
         });
 
+        // no scanning in chrome settings
         if (tab.url.startsWith('chrome://')) {
             alert('Cannot scan chrome:// pages');
             isScanning = false;
@@ -127,7 +128,7 @@ async function startScan() {
             return;
         }
 
-        // Fire-and-forget: content.js will send scan-started/scan-finished
+        // fire-and-forget: content.js will send a response (start/end)
         chrome.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
             // swallow any "no listener" errors silently
             if (chrome.runtime.lastError) return;
@@ -141,6 +142,7 @@ async function startScan() {
     }
 }
 
+// clear console handler
 async function clearConsole() {
     try {
         const [tab] = await chrome.tabs.query({
