@@ -13,12 +13,33 @@ const clearButton = document.getElementById('clearButton');
 
 // State
 let isConnected = false;
-let fallbackTimer = null;
 let connectionCheckTimer = null;
+let isScanning = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initially disable the scan button until we check connection
     scanButton.disabled = true;
+    
+    // Check if we were previously scanning (persists if popup closes)
+    chrome.storage.local.get(['isScanning'], (result) => {
+        isScanning = result.isScanning || false;
+        
+        // If active scan, check how long it's been running
+        if (isScanning) {
+            chrome.storage.local.get(['scanStartTime'], (timeResult) => {
+                const scanStartTime = timeResult.scanStartTime || 0;
+                const timeElapsed = Date.now() - scanStartTime;
+                
+                // If it's been longer than the timeout, assume scan finished or failed
+                if (timeElapsed > SCAN_TIMEOUT) {
+                    isScanning = false;
+                    chrome.storage.local.set({ isScanning: false });
+                }
+                
+                updateButtonState(isScanning);
+            });
+        }
+    });
     
     // Initial connection check
     checkConnection();
@@ -29,10 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // React to content-script events
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'scan-started') {
+            isScanning = true;
+            chrome.storage.local.set({ 
+                isScanning: true,
+                scanStartTime: Date.now()
+            });
             updateButtonState(true);
         }
         if (msg.action === 'scan-finished') {
-            clearTimeout(fallbackTimer);
+            isScanning = false;
+            chrome.storage.local.set({ isScanning: false });
             updateButtonState(false);
         }
     });
@@ -58,15 +85,8 @@ function updateStatus() {
     statusIndicator.classList.toggle('active', isConnected);
     statusText.textContent = isConnected ? 'Connected to backend' : 'Backend not available';
     
-    // Ensure scan button is disabled when backend is not connected
-    scanButton.disabled = !isConnected;
-    
-    // Update button text to indicate why it's disabled
-    if (!isConnected) {
-        scanButton.textContent = 'Backend Unavailable';
-    } else if (!scanButton.disabled) {
-        scanButton.textContent = 'Scan Page';
-    }
+    // Update button state based on connection and scanning status
+    updateButtonState(isScanning);
 }
 
 // Update button state based on scanning status
@@ -86,12 +106,12 @@ async function startScan() {
     if (!isConnected || scanButton.disabled) return;
 
     // Immediately disable & change text
+    isScanning = true;
+    chrome.storage.local.set({ 
+        isScanning: true,
+        scanStartTime: Date.now()
+    });
     updateButtonState(true);
-
-    // Fallback in case no finish message ever comes
-    fallbackTimer = setTimeout(() => {
-        updateButtonState(false);
-    }, SCAN_TIMEOUT);
 
     try {
         const [tab] = await chrome.tabs.query({
@@ -100,7 +120,8 @@ async function startScan() {
 
         if (tab.url.startsWith('chrome://')) {
             alert('Cannot scan chrome:// pages');
-            clearTimeout(fallbackTimer);
+            isScanning = false;
+            chrome.storage.local.set({ isScanning: false });
             updateButtonState(false);
             return;
         }
@@ -113,7 +134,8 @@ async function startScan() {
 
     } catch (err) {
         console.error('Popup error:', err);
-        clearTimeout(fallbackTimer);
+        isScanning = false;
+        chrome.storage.local.set({ isScanning: false });
         updateButtonState(false);
     }
 }

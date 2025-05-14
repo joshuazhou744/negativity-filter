@@ -235,7 +235,6 @@ async function transformText(text) {
         const response = await axios.post(`${BACKEND_URL}/transform-text`, { text: text });
         return [response.data.transformed, response.data.is_toxic];
     } catch (error) {
-        console.error('Backend error:', error);
         return [text, false];
     }
 }

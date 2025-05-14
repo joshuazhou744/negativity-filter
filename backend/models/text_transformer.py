@@ -1,16 +1,13 @@
 import time
 from typing import Optional, Dict, Any, List
 
-import openai
-import os
-
 from ibm_watsonx_ai import Credentials, APIClient
 from ibm_watsonx_ai.foundation_models import ModelInference
 
 credentials = Credentials(
     url = "https://us-south.ml.cloud.ibm.com"
 )
-model_id = "ibm/granite-3-3-8b-instruct"
+model_id = "meta-llama/llama-3-3-70b-instruct"
 project_id = "skills-network"
 system_prompt = """
 You are a toxicity filter. 
@@ -32,7 +29,7 @@ Original: "You are horrible"
 Transformed: "You are lovely!"
 
 ***
-NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT.
+NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT, WITHIN A FEW CHARACTERS LENGTH.
 DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR ANYTHING LIKE THAT.
 """
 
@@ -41,12 +38,13 @@ class TextTransformer:
     def __init__(
         self,
         credentials: Credentials = credentials,
-        model_id: str = "ibm/granite-3-3-8b-instruct",
+        model_id: str = model_id,
         project_id: str = project_id,
         system_prompt: str = system_prompt,
-        max_tokens: int = 300
+        max_tokens: int = 350
     ):
         self.credentials = credentials
+        self.model_id = model_id
         self.project_id = project_id
         self.system_prompt = system_prompt
         self.max_tokens = max_tokens
@@ -76,7 +74,6 @@ class TextTransformer:
                 project_id=self.project_id,
                 params={"max_tokens": 300},
             )
-
             response = model.chat(
                 messages = [
                     {
@@ -93,11 +90,10 @@ class TextTransformer:
                     }
                 ]
             )
-            print(response)
             transformed_text = response['choices'][0]['message']['content']
             return transformed_text.strip()
         except Exception as e:
             return "Error transforming text"
 
 def get_text_transformer() -> TextTransformer:
-    return TextTransformer(credentials=credentials, project_id=project_id, system_prompt=system_prompt)
+    return TextTransformer(credentials=credentials, model_id=model_id, project_id=project_id, system_prompt=system_prompt)
