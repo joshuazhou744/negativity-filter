@@ -1,6 +1,9 @@
 // content.js
 // handles content of the page
 
+// Firefox compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 // configuration
 const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';
 const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
@@ -21,11 +24,11 @@ if (window.__toxicityFilterInjected) {
 window.__toxicityFilterInjected = true;
 
 // process messages from the popup
-chrome.runtime.onMessage.addListener((request) => {
+browserAPI.runtime.onMessage.addListener((request) => {
     if (request.action === 'scan' && !scanning) {
         // start scanning page
         scanning = true;
-        chrome.runtime.sendMessage({ action: 'scan-started' });
+        browserAPI.runtime.sendMessage({ action: 'scan-started' });
         
         // discover elements until none left to discover
         if (!discovering) {
@@ -36,7 +39,7 @@ chrome.runtime.onMessage.addListener((request) => {
         scanPage()
             .then(() => {
                 console.log('Scan complete');
-                chrome.runtime.sendMessage({ action: 'scan-finished' });
+                browserAPI.runtime.sendMessage({ action: 'scan-finished' });
             })
             .catch(error => console.error('Scan error:', error))
             .finally(() => scanning = false);
