@@ -1,4 +1,5 @@
 // popup.js
+// handles the popup UI and interactions with page and backend
 
 // Configuration
 const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';

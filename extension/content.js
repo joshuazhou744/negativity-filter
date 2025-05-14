@@ -1,4 +1,5 @@
 // content.js
+// handles content of the page
 
 // Configuration
 const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';
