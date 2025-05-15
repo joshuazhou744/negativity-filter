@@ -1,14 +1,16 @@
-# Text transformer using WatsonX and Llama 3
+import time
+from typing import Optional, Dict, Any, List
 
-from ibm_watsonx_ai import Credentials, APIClient
-from ibm_watsonx_ai.foundation_models import ModelInference
+import openai
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
 
-# global variable configuration
-CREDENTIALS = Credentials(
-    url = "https://us-south.ml.cloud.ibm.com"
-)
-MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
-PROJECT_ID = "skills-network"
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = "gpt-4o-mini"
+MAX_TOKENS = 200
 SYSTEM_PROMPT = """
 You are a toxicity filter. 
 You are given text either with context or independently,
@@ -29,7 +31,7 @@ Original: "You are horrible"
 Transformed: "You are lovely!"
 
 ***
-NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT, WITHIN A FEW CHARACTERS LENGTH.
+NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT.
 DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR ANYTHING LIKE THAT.
 """
 
@@ -37,77 +39,49 @@ DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR
 class TextTransformer:
     def __init__(
         self,
-        credentials: Credentials,
-        model_id: str,
-        project_id: str,
-        system_prompt: str,
-        max_tokens: int = 350
+        api_key: str = OPENAI_API_KEY,
+        model: str = OPENAI_MODEL,
+        max_tokens: int = MAX_TOKENS,
+        system_prompt: str = SYSTEM_PROMPT
     ):
-        self.credentials = credentials
-        self.model_id = model_id
-        self.project_id = project_id
-        self.system_prompt = system_prompt
+        self.api_key = api_key
+        self.model = model
         self.max_tokens = max_tokens
-        # leading underscore access modifier labels the _client field as protected (only a label, not enforced)
+        self.system_prompt = system_prompt
         self._client = None
         self._initialize_client()
-    
-    # protected function to initialize the WatsonX client
-    def _initialize_client(self):
-        # credential verification
-        if not self.credentials:
-            raise ValueError("Credentials are required")
         
-        # initialize WatsonX client
+    def _initialize_client(self):
+        if not self.api_key:
+            raise ValueError("OpenAI API key is required")
+        
         try:
-            self._client = APIClient(self.credentials)
+            self._client = OpenAI(api_key=self.api_key)
         except Exception as e:
             raise
     
     def transform_text(
         self,
-        toxic_text: str
+        toxic_text: str,
+        context: Optional[str] = None,
     ) -> str:
-        # check for empty text
         if not toxic_text or not toxic_text.strip():
             return ""
         
         try:
-            model = ModelInference(
-                model_id=self.model_id,
-                credentials=self.credentials,
-                project_id=self.project_id,
-                params={"max_tokens": 300},
+
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
+                ],
+                max_tokens=self.max_tokens,
+                temperature=0.5
             )
-            response = model.chat(
-                messages = [
-                    {
-                        "role":"system",
-                        "content": [
-                            {"type": "text", "text": self.system_prompt}
-                        ]
-                    },
-                    {
-                        "role":"user",
-                        "content": [
-                            {"type": "text", "text": f"Original text: {toxic_text}"}
-                        ]
-                    }
-                ]
-            )
-            # print(response) uncomment to see the full response; for debugging
-            transformed_text = response['choices'][0]['message']['content']
-            return transformed_text.strip()
-        
+            return response.choices[0].message.content.strip()
         except Exception as e:
             return "Error transforming text"
 
-# wrapper function to get a TextTransformer object
 def get_text_transformer() -> TextTransformer:
-    return TextTransformer(
-                credentials=CREDENTIALS, 
-                model_id=MODEL_ID, 
-                project_id=PROJECT_ID, 
-                system_prompt=SYSTEM_PROMPT,
-                max_tokens=350
-            )
+    return TextTransformer()
