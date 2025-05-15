@@ -2,7 +2,7 @@
 // handles the popup UI and interactions with page and backend
 
 // configuration
-const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';
+const BACKEND_URL = 'configure me';
 const SCAN_TIMEOUT = 30000; // 30 second timeout
 const CONNECTION_CHECK_INTERVAL = 10000; // Check connection every 10 seconds
 

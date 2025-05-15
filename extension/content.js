@@ -2,7 +2,7 @@
 // handles content of the page
 
 // configuration
-const BACKEND_URL = 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai';
+const BACKEND_URL = 'configure me';
 const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
 const MAX_ELEMENTS = 100;
 const DISCOVERY_INTERVAL = 1000; // 1 second discovery interval
