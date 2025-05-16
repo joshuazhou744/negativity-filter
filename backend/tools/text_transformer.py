@@ -1,0 +1,44 @@
+# text_transformer.py
+# Text transformer using WatsonX and Llama 3
+
+from ibm_watsonx_ai import Credentials, APIClient
+from ibm_watsonx_ai.foundation_models import ModelInference
+
+# TODO: global variable configuration
+CREDENTIALS = Credentials(
+    url = ""
+)
+MODEL_ID = "model id"
+PROJECT_ID = "project id"
+SYSTEM_PROMPT = """
+system prompt
+"""
+
+# TextTransformer Object
+class TextTransformer:
+    def __init__(
+        self,
+        credentials: Credentials,
+        model_id: str,
+        project_id: str,
+        system_prompt: str,
+        max_tokens: int = 350
+    ):
+        # TODO: initialize the object fields
+        # leading underscore access modifier labels the _client field as protected (only a label, not enforced)
+        self._client = None
+        # TODO: initialize the client with a function
+    
+    # TODO: make a protected function to initialize the WatsonX client
+    
+    # TODO: make a function to transform the text
+
+# wrapper function to get a TextTransformer object
+def get_text_transformer() -> TextTransformer:
+    return TextTransformer(
+                credentials=CREDENTIALS, 
+                model_id=MODEL_ID, 
+                project_id=PROJECT_ID, 
+                system_prompt=SYSTEM_PROMPT,
+                max_tokens=350
+            )

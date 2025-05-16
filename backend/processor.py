@@ -1,38 +1,26 @@
-import sys
-import json
-import numpy as np
-from typing import Dict, Any, Tuple, Optional
+# processor.py
+# Processing logic for the backend
 
-# import models
-from models.text_transformer import get_text_transformer
-from models.toxicity_detector import get_toxicity_detector
+import sys
+from typing import Tuple
+
+# TODO: import models
 
 def process_text(text: str) -> Tuple[str, bool]:
     # check for empty text
     if not text or not text.strip():
         return text, False
     
-    text_transformer = get_text_transformer()
-    toxicity_detector = get_toxicity_detector()
+    # TODO: get the text transformer
+    # TODO: get the toxicity detector
     
-    # first check toxicity
-    is_toxic, scores = toxicity_detector.is_toxic(text)
+    # TODO: check toxicity
 
-    # toxicity scores returned by the ToxicBERT model (we can print these for logging/debugging)
-    scores = toxicity_detector._format_scores(scores)
+    # TODO: format scores
     
-    # not toxic
-    if not is_toxic:
-        return text, False
-    
-    # negativity detect, hence we transform the text
-    # similar to lazy loading where we only transform the text when needed; this improves efficiency
-    transformed_text = text_transformer.transform_text(text)
-    
-    # simple catch for empty transformed text, shouldn't be triggered too often
-    if not transformed_text:
-        return text, False
-        
+    # TODO: transform the text if negative
+    transformed_text = "transformed text"
+
     return transformed_text, True
 
 # test function to make sure the models are working
@@ -50,5 +38,6 @@ def test_process_text():
     print(f"Output text: {result}")
     print("=============================\n")
     
+# run this file to test the models
 if __name__ == "__main__":
     test_process_text()
