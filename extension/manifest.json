@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Toxicity Filter",
+  "name": "Negativity Filter",
   "version": "1.0",
   "description": "Filters negative text and replaces it with positive alternatives",
   "permissions": [
@@ -36,4 +36,4 @@
   "background": {
     "service_worker": "background.js"
   }
-} 
+}
