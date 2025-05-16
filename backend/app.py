@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pathlib import Path
 from pydantic import BaseModel
+import uvicorn
 
 # get the parent directory so we can import the processor function
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
 from processor import process_text
 
 app = FastAPI()
@@ -33,3 +31,6 @@ async def transform_text(data: TextRequest):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

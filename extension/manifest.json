@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Negativity Filter",
   "version": "1.0",
   "description": "Filters negative text and replaces it with positive alternatives",
