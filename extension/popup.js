@@ -5,7 +5,7 @@
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration
-const BACKEND_URL = 'configure me';
+const BACKEND_URL = 'http://localhost:8000';
 const SCAN_TIMEOUT = 30000; // 30 second timeout
 const CONNECTION_CHECK_INTERVAL = 10000; // Check connection every 10 seconds
 

@@ -5,7 +5,7 @@
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration
-const BACKEND_URL = 'configure me';
+const BACKEND_URL = 'http://localhost:8000';
 const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
 const MAX_ELEMENTS = 100;
 const DISCOVERY_INTERVAL = 1000; // 1 second discovery interval
@@ -238,9 +238,7 @@ document.head.appendChild(style);
 // call the backend to transform text
 async function transformText(text) {
     try {
-        console.log('Sending request to:', `${BACKEND_URL}/transform-text`);
         const response = await axios.post(`${BACKEND_URL}/transform-text`, { text: text });
-        console.log('Response:', response.data);
         return [response.data.transformed, response.data.is_toxic];
     } catch (error) {
         return [text, false];
