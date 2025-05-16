@@ -2,7 +2,12 @@
   "manifest_version": 3,
   "name": "Negativity Filter",
   "version": "1.0",
-  "description": "Filters negative text and replaces it with positive alternatives",
+  "description": "Filters toxic content and replaces it with positive alternatives",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "activeTab",
     "scripting",
@@ -23,7 +28,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["libs/axios.min.js", "content.js"],
+      "js": ["lib/axios.min.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -36,4 +41,4 @@
   "background": {
     "service_worker": "background.js"
   }
-}
+} 
