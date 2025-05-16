@@ -7,9 +7,7 @@ from typing import Tuple
 # TODO: import models
 
 def process_text(text: str) -> Tuple[str, bool]:
-    # check for empty text
-    if not text or not text.strip():
-        return text, False
+    # TODO: check for empty text
     
     # TODO: get the text transformer
     # TODO: get the toxicity detector
@@ -23,20 +21,9 @@ def process_text(text: str) -> Tuple[str, bool]:
 
     return transformed_text, True
 
-# test function to make sure the models are working
+# TODO: test function to make sure the models are working
 def test_process_text():
-    if len(sys.argv) != 2:
-        # processor.py usage (for testing)
-        print("Usage: python processor.py <text>")
-        sys.exit(1)
-        
-    text = sys.argv[1]
-    result = process_text(text)
-
-    print("\n=== Text Processing Results ===")
-    print(f"Input text: {text}")
-    print(f"Output text: {result}")
-    print("=============================\n")
+    print("Test process text")
     
 # run this file to test the models
 if __name__ == "__main__":

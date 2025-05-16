@@ -1,8 +1,7 @@
 # text_transformer.py
 # Text transformer using WatsonX and Llama 3
 
-from ibm_watsonx_ai import Credentials, APIClient
-from ibm_watsonx_ai.foundation_models import ModelInference
+# TODO: import necessary modules from WatsonX library
 
 # TODO: global variable configuration
 CREDENTIALS = Credentials(
@@ -33,12 +32,4 @@ class TextTransformer:
     
     # TODO: make a function to transform the text
 
-# wrapper function to get a TextTransformer object
-def get_text_transformer() -> TextTransformer:
-    return TextTransformer(
-                credentials=CREDENTIALS, 
-                model_id=MODEL_ID, 
-                project_id=PROJECT_ID, 
-                system_prompt=SYSTEM_PROMPT,
-                max_tokens=350
-            )
+# TODO: wrapper function to get a TextTransformer object

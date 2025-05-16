@@ -15,8 +15,7 @@ TOXICITY_THRESHOLD = 0.6
 
 # TODO: toxicity result class
 class ToxicityResult(BaseModel):
-    field: str
-    value: float
+    placeholder: str
 
 # model output class
 class ModelOutput(BaseModel):
@@ -52,20 +51,8 @@ class ToxicityDetector:
     
     # TODO: public function to check if text is toxic
     
-    # public function to get full toxicity details (for debugging)
-    def get_toxicity_details(self, text: str) -> ToxicityResult:
-        is_toxic, scores = self.is_toxic(text)
-        
-        max_category = max(scores.items(), key=lambda x: x[1])
-        
-        return ToxicityResult(
-            is_toxic=is_toxic,
-            scores=scores,
-            overall_score=scores["toxicity"],
-            primary_category=max_category[0],
-            primary_score=max_category[1]
-        )
+    # TODO: public function to get full toxicity details (for debugging)
 
 # wrapper function to get a ToxicityDetector object
-def get_toxicity_detector() -> ToxicityDetector:
-    return ToxicityDetector(threshold=TOXICITY_THRESHOLD)
+def get_toxicity_detector():
+    print("Get toxicity detector")
