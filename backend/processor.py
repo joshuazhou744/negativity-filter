@@ -3,8 +3,8 @@ import json
 import numpy as np
 from typing import Dict, Any, Tuple, Optional
 
-from models.text_transformer import get_text_transformer
-from models.toxicity_detector import get_toxicity_detector
+from tools.text_transformer import get_text_transformer
+from tools.toxicity_detector import get_toxicity_detector
 
 def process_text(text: str) -> Tuple[str, bool]:
     if not text or not text.strip():
