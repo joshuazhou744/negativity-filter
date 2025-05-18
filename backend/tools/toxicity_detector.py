@@ -13,10 +13,6 @@ from detoxify import Detoxify
 # threshold to decide whether or not a text is toxic, configurable
 TOXICITY_THRESHOLD = 0.6
 
-# TODO: toxicity result class
-class ToxicityResult(BaseModel):
-    placeholder: str
-
 # model output class
 class ModelOutput(BaseModel):
     toxicity: float
@@ -34,6 +30,10 @@ ZERO_SCORE = ModelOutput(
     insult=0.0,
     identity_attack=0.0
 )
+
+# TODO: toxicity result class
+class ToxicityResult(BaseModel):
+    placeholder: str
 
 class ToxicityDetector:
     def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):
