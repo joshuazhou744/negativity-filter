@@ -13,11 +13,6 @@ from detoxify import Detoxify
 # threshold to decide whether or not a text is toxic, configurable
 TOXICITY_THRESHOLD = 0.6
 
-# TODO: toxicity result class
-class ToxicityResult(BaseModel):
-    field: str
-    value: float
-
 # model output class
 class ModelOutput(BaseModel):
     toxicity: float
@@ -36,11 +31,20 @@ ZERO_SCORE = ModelOutput(
     identity_attack=0.0
 )
 
+class ToxicityResult(BaseModel):
+    is_toxic: bool
+    scores: ModelOutput
+    overall_score: float
+    primary_category: str
+    primary_score: float
+
 class ToxicityDetector:
     def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):
-        # TODO: initialize the object fields
+        self.threshold = threshold
+        self.model_type = model_type
+        # protected _model field
         self._model = None
-        # TODO: initialize the model with a function
+        self._load_model()
 
     # TODO: make a protected function to initialize the ToxicBERT model
     
@@ -68,4 +72,4 @@ class ToxicityDetector:
 
 # wrapper function to get a ToxicityDetector object
 def get_toxicity_detector() -> ToxicityDetector:
-    return ToxicityDetector(threshold=TOXICITY_THRESHOLD)
+    return ToxicityDetector()
