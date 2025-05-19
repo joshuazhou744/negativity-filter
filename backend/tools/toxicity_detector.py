@@ -48,9 +48,3 @@ class ToxicityDetector:
     # TODO: make a public function to check if text is toxic
     
     # TODO: make a protected function to print scores (for debugging)
-
-    # TODO: make a public function to get full toxicity details (for debugging)
-
-# wrapper function to get a ToxicityDetector object
-def get_toxicity_detector():
-    print("Get toxicity detector")

@@ -4,13 +4,13 @@
 import sys
 from typing import Tuple
 
-# TODO: import models
+# TODO: import tools
 
 def process_text(text: str) -> Tuple[str, bool]:
     # TODO: check for empty text
     
-    # TODO: get the text transformer
-    # TODO: get the toxicity detector
+    # TODO: initialize the text transformer
+    # TODO: initialize the toxicity detector
     
     # TODO: check toxicity
 
