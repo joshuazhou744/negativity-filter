@@ -43,13 +43,13 @@ class ToxicityDetector:
 
     # TODO: make a protected function to initialize the ToxicBERT model
     
-    # TODO: public function to predict toxicity of text
+    # TODO: make a public function to predict toxicity of text
     
-    # TODO: public function to check if text is toxic
+    # TODO: make a public function to check if text is toxic
     
     # TODO: make a protected function to print scores (for debugging)
 
-    # TODO: public function to get full toxicity details (for debugging)
+    # TODO: make a public function to get full toxicity details (for debugging)
 
 # wrapper function to get a ToxicityDetector object
 def get_toxicity_detector():

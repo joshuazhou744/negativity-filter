@@ -32,4 +32,4 @@ class TextTransformer:
     
     # TODO: make a function to transform the text
 
-# TODO: wrapper function to get a TextTransformer object
+# TODO: make a wrapper function to get a TextTransformer object

@@ -21,7 +21,7 @@ def process_text(text: str) -> Tuple[str, bool]:
 
     return transformed_text, True
 
-# TODO: test function to make sure the models are working
+# TODO: make a test function to make sure the models are working
 def test_process_text():
     print("Test process text")
     
