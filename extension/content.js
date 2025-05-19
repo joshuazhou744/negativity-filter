@@ -2,7 +2,7 @@
 // handles content scanning and element discovery on the page
 
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'http://localhost:8000',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 1000
@@ -11,7 +11,6 @@ const CONFIG = {
 // prevent multiple injections of content.js
 if (window.__toxicityFilterInjected) {
     console.log("Toxicity filter already injected");
-    return;
 }
 window.__toxicityFilterInjected = true;
 

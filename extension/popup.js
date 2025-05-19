@@ -2,7 +2,7 @@
 // handles the popup UI and interactions with the backend
 
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'http://localhost:8000',
     SCAN_TIMEOUT: 30000,
     CONNECTION_CHECK_INTERVAL: 10000
 };

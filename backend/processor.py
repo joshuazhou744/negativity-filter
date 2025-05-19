@@ -5,7 +5,7 @@ from typing import Dict, Any, Tuple, Optional
 
 # import models
 from tools.text_transformer import get_text_transformer
-from tools.toxicity_detector import get_toxicity_detector
+from tools.toxicity_detector import ToxicityDetector
 
 def process_text(text: str) -> Tuple[str, bool]:
     # check for empty text
@@ -13,7 +13,7 @@ def process_text(text: str) -> Tuple[str, bool]:
         return text, False
     
     text_transformer = get_text_transformer()
-    toxicity_detector = get_toxicity_detector()
+    toxicity_detector = ToxicityDetector()
     
     # first check toxicity
     is_toxic, scores = toxicity_detector.is_toxic(text)
