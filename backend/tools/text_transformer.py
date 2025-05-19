@@ -1,12 +1,13 @@
 # text_transformer.py
-# Text transformer using WatsonX and Llama 3
+# Text transformer using Watsonx.ai and Llama 3
 
 from ibm_watsonx_ai import Credentials, APIClient
 from ibm_watsonx_ai.foundation_models import ModelInference
 
-# TODO: global variable configuration
+# global variable configuration
 CREDENTIALS = Credentials(
-    url = ""
+    url = "https://us-south.ml.cloud.ibm.com",
+    # apikey = "NOT NEEDED IN CLOUDIDE"
 )
 MODEL_ID = "model id"
 PROJECT_ID = "project id"

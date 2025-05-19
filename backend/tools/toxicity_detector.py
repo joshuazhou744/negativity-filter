@@ -32,7 +32,7 @@ ZERO_SCORE = ModelOutput(
 )
 
 class ToxicityDetector:
-    def __init__(self, threshold = TOXICITY_THRESHOLD, model_type = "original"):
+    def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):
         self.threshold = threshold
         self.model_type = model_type
         # protected _model field
