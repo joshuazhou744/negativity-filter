@@ -31,45 +31,48 @@ ZERO_SCORE = ModelOutput(
     identity_attack=0.0
 )
 
-class ToxicityResult(BaseModel):
-    is_toxic: bool
-    scores: ModelOutput
-    overall_score: float
-    primary_category: str
-    primary_score: float
-
 class ToxicityDetector:
-    def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):
+    def __init__(self, threshold = TOXICITY_THRESHOLD, model_type = "original"):
         self.threshold = threshold
         self.model_type = model_type
         # protected _model field
         self._model = None
         self._load_model()
 
-    # TODO: make a protected function to initialize the ToxicBERT model
+    # protected function to initialize the ToxicBERT model
+    def _load_model(self):
+        start_time = time.time()
+        try:
+            self._model = Detoxify(self.model_type)
+        except Exception as e:
+            raise Exception("Error loading model")
     
-    # TODO: make a protected function to format scores
     
-    # TODO: make a protected function to print scores (for debugging)
-    
-    # TODO: public function to predict toxicity of text
-    
-    # TODO: public function to check if text is toxic
-    
-    # public function to get full toxicity details (for debugging)
-    def get_toxicity_details(self, text: str) -> ToxicityResult:
-        is_toxic, scores = self.is_toxic(text)
-        
-        max_category = max(scores.items(), key=lambda x: x[1])
-        
-        return ToxicityResult(
-            is_toxic=is_toxic,
-            scores=scores,
-            overall_score=scores["toxicity"],
-            primary_category=max_category[0],
-            primary_score=max_category[1]
-        )
+    # public function to predict toxicity of text
+    def predict(self, text: str) -> ModelOutput:
+        # check if no text; returns zero scores
+        if not text or not text.strip():
+            return ZERO_SCORE
 
-# wrapper function to get a ToxicityDetector object
-def get_toxicity_detector() -> ToxicityDetector:
-    return ToxicityDetector()
+        # predict toxicity
+        try:
+            model_result = self._model.predict(text)
+            model_result = ModelOutput(**model_result)
+            # self._print_scores(model_result) uncomment to see scores
+            return model_result
+        except Exception as e:
+            print(f"Error predicting toxicity: {e}")
+            return ZERO_SCORE
+
+    # public function to check if text is toxic
+    def is_toxic(self, text: str) -> Tuple[bool, ModelOutput]:
+        scores = self.predict(text)
+        is_toxic = scores.toxicity >= self.threshold
+
+        return is_toxic, scores
+    
+    # protected function to print scores (for debugging)
+    def _print_scores(self, scores: ModelOutput):
+        print("\nToxicity Scores:")
+        for category, score in scores.dict().items():
+            print(f"{category:20}: {score:.6f}")

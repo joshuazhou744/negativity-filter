@@ -18,10 +18,10 @@ system prompt
 class TextTransformer:
     def __init__(
         self,
-        credentials: Credentials,
-        model_id: str,
-        project_id: str,
-        system_prompt: str,
+        credentials: Credentials = CREDENTIALS,
+        model_id: str = MODEL_ID,
+        project_id: str = PROJECT_ID,
+        system_prompt: str = SYSTEM_PROMPT,
         max_tokens: int = 350
     ):
         # TODO: initialize the object fields
@@ -32,13 +32,3 @@ class TextTransformer:
     # TODO: make a protected function to initialize the WatsonX client
     
     # TODO: make a function to transform the text
-
-# wrapper function to get a TextTransformer object
-def get_text_transformer() -> TextTransformer:
-    return TextTransformer(
-                credentials=CREDENTIALS, 
-                model_id=MODEL_ID, 
-                project_id=PROJECT_ID, 
-                system_prompt=SYSTEM_PROMPT,
-                max_tokens=350
-            )
