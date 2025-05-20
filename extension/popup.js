@@ -2,8 +2,7 @@
 // handles the popup UI and interactions with the backend
 
 const CONFIG = {
-    BACKEND_URL: 'configure me',
-    SCAN_TIMEOUT: 30000,
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     CONNECTION_CHECK_INTERVAL: 10000
 };
 
@@ -59,14 +58,28 @@ async function checkConnection() {
     updateStatus();
 }
 
+// check the previous scan state when popup opens
+async function checkPreviousScanState() {
+    try {
+        const { isScanning } = await chrome.storage.local.get(['isScanning']);
+        state.isScanning = isScanning || false;
+        updateButtonState();
+    } catch (error) {
+        console.error('Error checking scan state:', error);
+        state.isScanning = false;
+        updateButtonState();
+    }
+}
+
 // set scan state
 async function setScanningState(scanning) {
     state.isScanning = scanning;
-    await chrome.storage.local.set({ 
-        isScanning: scanning,
-        scanStartTime: scanning ? Date.now() : null
-    });
-    updateButtonState();
+    try {
+        await chrome.storage.local.set({ isScanning: scanning });
+        updateButtonState();
+    } catch (error) {
+        console.error('Error setting scan state:', error);
+    }
 }
 
 // send a message to the content script to scan the current page
@@ -119,19 +132,22 @@ function handleContentScriptMessage(msg) {
     }
 }
 
-// check the previous scan state when popup opens
-async function checkPreviousScanState() {
-    const { isScanning, scanStartTime } = await chrome.storage.local.get(['isScanning', 'scanStartTime']);
-    
-    // if scan has been running too long, assume it failed
-    if (isScanning && Date.now() - (scanStartTime || 0) > CONFIG.SCAN_TIMEOUT) {
+// reset scanning state and storage
+async function resetScanState() {
+    try {
+        await chrome.storage.local.remove(['isScanning']);
         state.isScanning = false;
-        await chrome.storage.local.set({ isScanning: false });
-    } else {
-        state.isScanning = isScanning || false;
+        updateButtonState();
+        
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && !tab.url.startsWith('chrome://')) {
+            chrome.tabs.sendMessage(tab.id, { action: 'reset' }, () => {
+                if (chrome.runtime.lastError) return;
+            });
+        }
+    } catch (error) {
+        console.error('Error resetting scan state:', error);
     }
-    
-    updateButtonState();
 }
 
 function initialize() {
@@ -151,6 +167,13 @@ function initialize() {
 
     // listen for content script messages
     chrome.runtime.onMessage.addListener(handleContentScriptMessage);
+
+    // listen for tab updates (reload/navigation)
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+        if (changeInfo.status === 'loading') {
+            resetScanState();
+        }
+    });
 }
 
 // start everything when the DOM is loaded

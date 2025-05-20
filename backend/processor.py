@@ -17,9 +17,6 @@ def process_text(text: str) -> Tuple[str, bool]:
     
     # first check toxicity
     is_toxic, scores = toxicity_detector.is_toxic(text)
-
-    # toxicity scores returned by the ToxicBERT model (we can print these for logging/debugging)
-    scores = toxicity_detector._format_scores(scores)
     
     # not toxic case
     if not is_toxic:

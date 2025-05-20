@@ -2,17 +2,11 @@
 // handles content scanning and element discovery on the page
 
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 1000
-};
-
-// prevent multiple injections of content.js
-if (window.__toxicityFilterInjected) {
-    console.log("Toxicity filter already injected");
-}
-window.__toxicityFilterInjected = true;
+};   
 
 // state management for logging and debugging
 const state = {
@@ -23,23 +17,6 @@ const state = {
     currentIndex: 0,
     discoveryTimer: null
 };
-
-// message handling
-chrome.runtime.onMessage.addListener((request) => {
-    switch (request.action) {
-        case 'scan':
-            if (!state.scanning) {
-                startScan();
-            }
-            break;
-        case 'reset':
-            resetState();
-            break;
-        case 'clear-console':
-            console.clear();
-            break;
-    }
-});
 
 // continuous element discovery functions
 function startElementDiscovery() {
@@ -94,7 +71,7 @@ function isValidElement(element) {
     return text.length > 0;
 }
 
-// generate a unique id for the element
+// generate an id for the element, identical elements will have the same id
 function getElementId(element) {
     return element.tagName + 
            (element.id ? '#' + element.id : '') + 
@@ -104,27 +81,31 @@ function getElementId(element) {
 
 // state management and logging for starting a scan
 async function startScan() {
-    console.clear();
-    state.scanning = true;
-    chrome.runtime.sendMessage({ action: 'scan-started' });
-    
-    if (!state.discovering) {
-        startElementDiscovery();
-    }
+    if (state.scanning) return;
     
     try {
+        state.scanning = true;
+        // Notify popup that scanning has started
+        if (chrome.runtime?.id) {
+            chrome.runtime.sendMessage({ action: 'scan-started' });
+        }
+        
+        if (!state.discovering) {
+            startElementDiscovery();
+        }
+        
         await scanPage();
         console.log('Scan complete');
     } catch (error) {
         console.error('Scan error:', error);
     } finally {
-        state.scanning = false;
-        chrome.runtime.sendMessage({ action: 'scan-finished' });
+        resetScanState();
     }
 }
 
 // actual scanning of the page
 async function scanPage() {
+    console.clear();
     if (state.elementsToProcess.length === 0) {
         discoverElements();
         if (state.elementsToProcess.length === 0) {
@@ -154,7 +135,9 @@ async function scanPage() {
 
 // process a batch of elements for scanning
 async function processBatch(elements, stats) {
+    // process each element in the batch in parallel
     await Promise.all(elements.map(async (element) => {
+        // check if the element is still connected to the DOM
         if (!element.isConnected) return;
         
         const text = element.textContent.trim().replace(/\s+/g, ' ');
@@ -177,6 +160,7 @@ async function processText(text) {
     let hasToxic = false;
     let sentenceCount = 0;
     
+    // process each sentence in the element sequentially
     for (const sentence of sentences) {
         if (!sentence.trim()) continue;
         
@@ -209,13 +193,30 @@ function logStats(stats) {
     console.log(`Next scan will start at index ${state.currentIndex}`);
 }
 
-// reset the state of the scan
-function resetState() {
+// reset all states on reload
+async function resetState() {
     state.currentIndex = 0;
     state.seen.clear();
     state.elementsToProcess.length = 0;
+    state.scanning = false;
     stopElementDiscovery();
     startElementDiscovery();
+    resetScanState();
+}
+
+// reset the scanning states on reload
+async function resetScanState() {
+    state.scanning = false;
+    try {
+        // clear scanning state in storage
+        await chrome.storage.local.remove(['isScanning']);
+        // notify popup that scanning has been reset
+        if (chrome.runtime?.id) {
+            chrome.runtime.sendMessage({ action: 'scan-finished' });
+        }
+    } catch (error) {
+        console.error('Error cleaning up scan:', error);
+    }
 }
 
 // initialize and inject the style for transformed content
@@ -226,9 +227,6 @@ background-color: yellow !important; color: black !important;
 }`
 document.head.appendChild(style);
 
-// start discovery on load
-window.addEventListener('load', startElementDiscovery);
-
 // backend communication for transforming text
 async function transformText(text) {
     try {
@@ -238,3 +236,43 @@ async function transformText(text) {
         return [text, false];
     }
 }
+
+function main() {
+    // prevent multiple injections of content.js
+    if (window.__toxicityFilterInjected) {
+        console.log("Toxicity filter already injected");
+        return;
+    } else {
+        window.__toxicityFilterInjected = true;
+    }
+
+    // start discovery on load
+    window.addEventListener('load', startElementDiscovery);
+
+    // message handling
+    const messageListener = (request) => {
+        // Check if extension is still valid
+        if (!chrome.runtime?.id) {
+            chrome.runtime.onMessage.removeListener(messageListener);
+            return;
+        }
+
+        switch (request.action) {
+            case 'scan':
+                if (!state.scanning) {
+                    startScan();
+                }
+                break;
+            case 'reset':
+                resetState();
+                break;
+            case 'clear-console':
+                console.clear();
+                break;
+        }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+}
+
+main();
