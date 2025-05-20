@@ -142,7 +142,7 @@ async function scanPage() {
 
     let stats = { processed: 0, sentences: 0, toxic: 0 };
     
-    // Process elements in batches of 10
+    // process elements in batches of 10
     for (let i = 0; i < elements.length; i += 10) {
         const batch = elements.slice(i, i + 10);
         await processBatch(batch, stats);
