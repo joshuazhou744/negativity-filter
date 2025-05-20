@@ -141,31 +141,30 @@ function handleContentScriptMessage(msg) {
         case 'scan-finished':
             setScanningState(false);
             break;
+        case 'reset':
+            resetScanState();
+            break;
     }
 }
 
 function initialize() {
     // initially disable the scan button
     elements.scanButton.disabled = true;
-    
-    // set up event listeners for the scan and clear console buttons
-    elements.scanButton.addEventListener('click', startScan);
-    elements.clearButton.addEventListener('click', clearConsole);
-    
+
     // check the previous scan state
     checkPreviousScanState();
     
     // set up periodic connection checking
     checkConnection();
     state.connectionCheckTimer = setInterval(checkConnection, CONFIG.CONNECTION_CHECK_INTERVAL);
+    
+    // set up event listeners for the scan and clear console buttons
+    elements.scanButton.addEventListener('click', startScan);
+    elements.clearButton.addEventListener('click', clearConsole);
 
     // listen for content script messages
     chrome.runtime.onMessage.addListener((message) => {
-        if (message.action === 'reset') {
-            resetScanState();
-        } else {
-            handleContentScriptMessage(message);
-        }
+        handleContentScriptMessage(message);
     });
 }
 
