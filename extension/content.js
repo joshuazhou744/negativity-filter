@@ -201,7 +201,6 @@ async function resetState() {
     state.currentIndex = 0;
     state.seen.clear();
     state.elementsToProcess.length = 0;
-    state.scanning = false;
     stopElementDiscovery();
     startElementDiscovery();
     resetScanState();
