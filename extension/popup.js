@@ -9,164 +9,69 @@ const CONFIG = {
 
 // state management
 const state = {
-    isConnected: false,
-    isScanning: false,
-    connectionCheckTimer: null
+    // TODO: add state variables here
 };
 
 // elements of the UI
 const elements = {
-    statusIndicator: document.getElementById('statusIndicator'),
-    statusText: document.getElementById('statusText'),
-    scanButton: document.getElementById('scanButton'),
-    clearButton: document.getElementById('clearButton')
+    // TODO: add elements of the UI here
 };
 
 // UI updates
 function updateStatus() {
-    elements.statusIndicator.classList.toggle('active', state.isConnected);
-    elements.statusText.textContent = state.isConnected 
-        ? 'Connected to backend' 
-        : 'Backend not available';
-    
-    updateButtonState();
+    // TODO: update the status of the UI here
 }
 
 // update the button state based on the connection and scan state
 function updateButtonState() {
-    const { scanButton } = elements;
-    const { isScanning, isConnected } = state;
-
-    scanButton.disabled = isScanning || !isConnected;
-    
-    if (isScanning) {
-        scanButton.textContent = 'Scanning...';
-    } else if (!isConnected) {
-        scanButton.textContent = 'Backend Unavailable';
-    } else {
-        scanButton.textContent = 'Scan Page';
-    }
+    // TODO: update the button state of the UI here
 }
 
 // check backend connection
 async function checkConnection() {
-    try {
-        const response = await fetch(`${CONFIG.BACKEND_URL}/health`);
-        state.isConnected = response.ok;
-    } catch (error) {
-        state.isConnected = false;
-    }
-    updateStatus();
+    // TODO: check the connection to the backend here
 }
 
 // check the previous scan state when popup opens
 async function checkPreviousScanState() {
-    try {
-        const { isScanning } = await chrome.storage.local.get(['isScanning']);
-        state.isScanning = isScanning || false;
-        updateButtonState();
-    } catch (error) {
-        console.error('Error checking scan state:', error);
-        state.isScanning = false;
-        updateButtonState();
-    }
+    // TODO: check the previous scan state
 }
 
 // set scan state
 async function setScanningState(scanning) {
-    state.isScanning = scanning;
-    try {
-        await chrome.storage.local.set({ isScanning: scanning });
-        updateButtonState();
-    } catch (error) {
-        console.error('Error setting scan state:', error);
-    }
+    // TODO: set the scan state
 }
 
 // reset scanning state and storage
 async function resetScanState() {
-    try {
-        await chrome.storage.local.remove(['isScanning']);
-        state.isScanning = false;
-        updateButtonState();
-    } catch (error) {
-        console.error('Error resetting scan state:', error);
-    }
+    // TODO: reset the scanning state and storage
 }
 
 // send a message to the content script to scan the current page
 async function startScan() {
-    if (!state.isConnected || elements.scanButton.disabled) return;
-
-    try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        
-        if (tab.url.startsWith('chrome://')) {
-            alert('Cannot scan chrome:// pages');
-            return;
-        }
-
-        await setScanningState(true);
-        chrome.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
-            if (chrome.runtime.lastError) return;
-        });
-
-    } catch (err) {
-        console.error('Scan error:', err);
-        await setScanningState(false);
-    }
+    // TODO: send a message to the content script to scan the current page
 }
 
 // send a message to the content script to clear the console
 async function clearConsole() {
-    try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        
-        if (tab.url.startsWith('chrome://')) return;
-        
-        chrome.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
-            if (chrome.runtime.lastError) return;
-        });
-    } catch (err) {
-        console.error('Clear console error:', err);
-    }
+    // TODO: send a message to the content script to clear the console
 }
 
 // message handling from the content script
 function handleContentScriptMessage(msg) {
-    switch (msg.action) {
-        case 'scan-started':
-            setScanningState(true);
-            break;
-        case 'scan-finished':
-            setScanningState(false);
-            break;
-    }
+    // TODO: handle the message from the content script
 }
 
 function initialize() {
-    // initially disable the scan button
-    elements.scanButton.disabled = true;
+    // TODO: initialize the popup before the checks
     
-    // set up event listeners for the scan and clear console buttons
-    elements.scanButton.addEventListener('click', startScan);
-    elements.clearButton.addEventListener('click', clearConsole);
+    // TODO: check the previous scan state
     
-    // check the previous scan state
-    checkPreviousScanState();
-    
-    // set up periodic connection checking
-    checkConnection();
-    state.connectionCheckTimer = setInterval(checkConnection, CONFIG.CONNECTION_CHECK_INTERVAL);
+    // TODO: set up periodic connection checking
 
-    // listen for content script messages
-    chrome.runtime.onMessage.addListener((message) => {
-        if (message.action === 'reset') {
-            resetScanState();
-        } else {
-            handleContentScriptMessage(message);
-        }
-    });
+    // TODO: set up event listeners for the scan and clear console buttons 
+
+    // TODO: listen for content script messages
 }
 
 // start everything when the DOM is loaded
