@@ -2,7 +2,7 @@
 // handles content scanning and element discovery on the page
 
 const CONFIG = {
-    BACKEND_URL: 'http://localhost:8000',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 1000
@@ -104,6 +104,7 @@ function getElementId(element) {
 
 // state management and logging for starting a scan
 async function startScan() {
+    console.clear();
     state.scanning = true;
     chrome.runtime.sendMessage({ action: 'scan-started' });
     
