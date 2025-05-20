@@ -50,9 +50,6 @@ class ToxicityDetector:
     
     # public function to predict toxicity of text
     def predict(self, text: str) -> ModelOutput:
-        # check if no text; returns zero scores
-        if not text or not text.strip():
-            return ZERO_SCORE
 
         # predict toxicity
         try:
