@@ -1,18 +1,25 @@
 // popup.js
 // handles the popup UI and interactions with the backend
 
-const config = {
-    // TODO: initialize important variables
+// configuration for global constants
+const CONFIG = {
+    BACKEND_URL: 'configure me',
+    CONNECTION_CHECK_INTERVAL: 10000
 };
 
 // state management
 const state = {
-    // TODO: initialize the states
+    isConnected: false,
+    isScanning: false,
+    connectionCheckTimer: null
 };
 
 // elements of the UI
 const elements = {
-    // TODO: initialize the element references
+    statusIndicator: document.getElementById('statusIndicator'),
+    statusText: document.getElementById('statusText'),
+    scanButton: document.getElementById('scanButton'),
+    clearButton: document.getElementById('clearButton')
 };
 
 // UI updates
@@ -52,14 +59,39 @@ async function checkConnection() {
     updateStatus();
 }
 
+// check the previous scan state when popup opens
+async function checkPreviousScanState() {
+    try {
+        const { isScanning } = await chrome.storage.local.get(['isScanning']);
+        state.isScanning = isScanning || false;
+        updateButtonState();
+    } catch (error) {
+        console.error('Error checking scan state:', error);
+        state.isScanning = false;
+        updateButtonState();
+    }
+}
+
 // set scan state
 async function setScanningState(scanning) {
     state.isScanning = scanning;
-    await chrome.storage.local.set({ 
-        isScanning: scanning,
-        scanStartTime: scanning ? Date.now() : null
-    });
-    updateButtonState();
+    try {
+        await chrome.storage.local.set({ isScanning: scanning });
+        updateButtonState();
+    } catch (error) {
+        console.error('Error setting scan state:', error);
+    }
+}
+
+// reset scanning state and storage
+async function resetScanState() {
+    try {
+        await chrome.storage.local.remove(['isScanning']);
+        state.isScanning = false;
+        updateButtonState();
+    } catch (error) {
+        console.error('Error resetting scan state:', error);
+    }
 }
 
 // send a message to the content script to scan the current page
@@ -112,21 +144,6 @@ function handleContentScriptMessage(msg) {
     }
 }
 
-// check the previous scan state when popup opens
-async function checkPreviousScanState() {
-    const { isScanning, scanStartTime } = await chrome.storage.local.get(['isScanning', 'scanStartTime']);
-    
-    // if scan has been running too long, assume it failed
-    if (isScanning && Date.now() - (scanStartTime || 0) > CONFIG.SCAN_TIMEOUT) {
-        state.isScanning = false;
-        await chrome.storage.local.set({ isScanning: false });
-    } else {
-        state.isScanning = isScanning || false;
-    }
-    
-    updateButtonState();
-}
-
 function initialize() {
     // initially disable the scan button
     elements.scanButton.disabled = true;
@@ -143,7 +160,13 @@ function initialize() {
     state.connectionCheckTimer = setInterval(checkConnection, CONFIG.CONNECTION_CHECK_INTERVAL);
 
     // listen for content script messages
-    chrome.runtime.onMessage.addListener(handleContentScriptMessage);
+    chrome.runtime.onMessage.addListener((message) => {
+        if (message.action === 'reset') {
+            resetScanState();
+        } else {
+            handleContentScriptMessage(message);
+        }
+    });
 }
 
 // start everything when the DOM is loaded
