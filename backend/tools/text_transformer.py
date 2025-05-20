@@ -54,9 +54,6 @@ class TextTransformer:
     
     # protected function to initialize the WatsonX client
     def _initialize_client(self):
-        # credential verification
-        if not self.credentials:
-            raise ValueError("Credentials are required")
         
         # initialize WatsonX client
         try:
@@ -68,9 +65,6 @@ class TextTransformer:
         self,
         toxic_text: str
     ) -> str:
-        # check for empty text
-        if not toxic_text or not toxic_text.strip():
-            return ""
         
         try:
             model = ModelInference(
