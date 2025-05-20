@@ -2,7 +2,7 @@
 // handles the popup UI and interactions with the backend
 
 const CONFIG = {
-    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
+    BACKEND_URL: 'configure me',
     SCAN_TIMEOUT: 30000,
     CONNECTION_CHECK_INTERVAL: 10000
 };
