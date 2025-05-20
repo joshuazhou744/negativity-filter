@@ -1,11 +1,13 @@
 // content.js
 // handles content scanning and element discovery on the page
 
+// configuration for global constants
 const CONFIG = {
     BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
-    DISCOVERY_INTERVAL: 1000
+    DISCOVERY_INTERVAL: 1000,
+    BATCH_SIZE: 10
 };   
 
 // state management for logging and debugging
@@ -99,7 +101,8 @@ async function startScan() {
     } catch (error) {
         console.error('Scan error:', error);
     } finally {
-        resetScanState();
+        // Always attempt to reset state, even if extension context is invalid
+        await resetScanState();
     }
 }
 
@@ -124,8 +127,8 @@ async function scanPage() {
     let stats = { processed: 0, sentences: 0, toxic: 0 };
     
     // process elements in batches of 10
-    for (let i = 0; i < elements.length; i += 10) {
-        const batch = elements.slice(i, i + 10);
+    for (let i = 0; i < elements.length; i += CONFIG.BATCH_SIZE) {
+        const batch = elements.slice(i, i + CONFIG.BATCH_SIZE);
         await processBatch(batch, stats);
     }
     
@@ -208,14 +211,15 @@ async function resetState() {
 async function resetScanState() {
     state.scanning = false;
     try {
-        // clear scanning state in storage
-        await chrome.storage.local.remove(['isScanning']);
-        // notify popup that scanning has been reset
+        // only attempt chrome API calls if extension is still valid
         if (chrome.runtime?.id) {
+            // clear scanning state in storage
+            await chrome.storage.local.remove(['isScanning']);
+            // notify popup that scanning has been reset
             chrome.runtime.sendMessage({ action: 'scan-finished' });
         }
     } catch (error) {
-        console.error('Error cleaning up scan:', error);
+        console.error('Extension context changed, local state reset only', error);
     }
 }
 

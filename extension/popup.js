@@ -1,6 +1,7 @@
 // popup.js
 // handles the popup UI and interactions with the backend
 
+// configuration for global constants
 const CONFIG = {
     BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     CONNECTION_CHECK_INTERVAL: 10000
@@ -82,6 +83,17 @@ async function setScanningState(scanning) {
     }
 }
 
+// reset scanning state and storage
+async function resetScanState() {
+    try {
+        await chrome.storage.local.remove(['isScanning']);
+        state.isScanning = false;
+        updateButtonState();
+    } catch (error) {
+        console.error('Error resetting scan state:', error);
+    }
+}
+
 // send a message to the content script to scan the current page
 async function startScan() {
     if (!state.isConnected || elements.scanButton.disabled) return;
@@ -132,24 +144,6 @@ function handleContentScriptMessage(msg) {
     }
 }
 
-// reset scanning state and storage
-async function resetScanState() {
-    try {
-        await chrome.storage.local.remove(['isScanning']);
-        state.isScanning = false;
-        updateButtonState();
-        
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab && !tab.url.startsWith('chrome://')) {
-            chrome.tabs.sendMessage(tab.id, { action: 'reset' }, () => {
-                if (chrome.runtime.lastError) return;
-            });
-        }
-    } catch (error) {
-        console.error('Error resetting scan state:', error);
-    }
-}
-
 function initialize() {
     // initially disable the scan button
     elements.scanButton.disabled = true;
@@ -166,12 +160,11 @@ function initialize() {
     state.connectionCheckTimer = setInterval(checkConnection, CONFIG.CONNECTION_CHECK_INTERVAL);
 
     // listen for content script messages
-    chrome.runtime.onMessage.addListener(handleContentScriptMessage);
-
-    // listen for tab updates (reload/navigation)
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-        if (changeInfo.status === 'loading') {
+    chrome.runtime.onMessage.addListener((message) => {
+        if (message.action === 'reset') {
             resetScanState();
+        } else {
+            handleContentScriptMessage(message);
         }
     });
 }
