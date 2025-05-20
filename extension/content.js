@@ -4,243 +4,281 @@
 // Firefox compatibility
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
-// configuration
-const BACKEND_URL = 'http://localhost:8000';
-const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
-const MAX_ELEMENTS = 100;
-const DISCOVERY_INTERVAL = 1000; // 1 second discovery interval
+// configuration for global constants
+const CONFIG = {
+    BACKEND_URL: 'http://localhost:8000',
+    TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
+    MAX_ELEMENTS: 100,
+    DISCOVERY_INTERVAL: 1000,
+    BATCH_SIZE: 10
+};   
 
-// states
-const seen = new Set();
-const allElementsToProcess = [];
-let scanning = false;
-let discovering = false;
-let index = 0;
-let discoveryTimer = null;
+// state management for logging and debugging
+const state = {
+    seen: new Set(),
+    elementsToProcess: [],
+    scanning: false,
+    discovering: false,
+    currentIndex: 0,
+    discoveryTimer: null
+};
 
-if (window.__toxicityFilterInjected) {
-    console.log("Toxicity filter already injected");
-}
-window.__toxicityFilterInjected = true;
-
-// process messages from the popup
-browserAPI.runtime.onMessage.addListener((request) => {
-    if (request.action === 'scan' && !scanning) {
-        // start scanning page
-        scanning = true;
-        browserAPI.runtime.sendMessage({ action: 'scan-started' });
-        
-        // discover elements until none left to discover
-        if (!discovering) {
-            startElementDiscovery();
-        }
-        
-        // run scan and handle completion
-        scanPage()
-            .then(() => {
-                console.log('Scan complete');
-                browserAPI.runtime.sendMessage({ action: 'scan-finished' });
-            })
-            .catch(error => console.error('Scan error:', error))
-            .finally(() => scanning = false);
-    } else if (request.action === 'reset') {
-        // reset index, seen set and elements to process
-        index = 0;
-        seen.clear();
-        allElementsToProcess.length = 0;
-        
-        // restart discovery
-        stopElementDiscovery();
-        startElementDiscovery();
-        
-        console.log('Reset index and element tracking');
-    } else if (request.action === 'clear-console') {
-        // self-explanatory
-        console.clear();
-    }
-});
-
-// background task for element discovery
+// continuous element discovery functions
 function startElementDiscovery() {
-    if (discovering) return;
+    if (state.discovering) return;
     
-    discovering = true;
+    state.discovering = true;
     console.log('Starting element discovery');
     
-    // initial discovery
     discoverElements();
-    
-    // set up periodic discovery
-    discoveryTimer = setInterval(discoverElements, DISCOVERY_INTERVAL);
+    state.discoveryTimer = setInterval(discoverElements, CONFIG.DISCOVERY_INTERVAL);
 }
 
 function stopElementDiscovery() {
-    if (discoveryTimer) {
-        clearInterval(discoveryTimer);
-        discoveryTimer = null;
+    if (state.discoveryTimer) {
+        clearInterval(state.discoveryTimer);
+        state.discoveryTimer = null;
     }
-    discovering = false;
-    console.log('Stopped element discovery');
+    state.discovering = false;
 }
 
 function discoverElements() {
-    const body = document.body;
-    if (!body) return;
+    if (!document.body) return;
     
-    // get all elements and filter them
-    const newElements = Array.from(body.querySelectorAll(TEXT_SELECTORS))
+    const newElements = Array.from(document.body.querySelectorAll(CONFIG.TEXT_SELECTORS))
         .filter(element => {
-            // generate a unique identifer
-            const elementId = element.tagName + 
-                              (element.id ? '#' + element.id : '') + 
-                              (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
-                              ':' + element.textContent.trim().substring(0, 20);
+            if (!isValidElement(element)) return false;
             
-            // skip if we've already seen this element
-            if (seen.has(elementId)) {
-                return false;
-            }
+            const elementId = getElementId(element);
+            if (state.seen.has(elementId)) return false;
             
-            // skip elements with children (non-leaf nodes)
-            if (element.children.length > 0) {
-                return false;
-            }
-            
-            // skip hidden elements
-            const style = window.getComputedStyle(element);
-            if (style.display === 'none' || style.visibility === 'hidden') {
-                seen.add(elementId); // mark as seen even if we're skipping
-                return false;
-            }
-            
-            // skip empty elements
-            const text = element.textContent.trim().replace(/\s+/g, ' ');
-            if (!text) {
-                seen.add(elementId); // mark as seen even if we're skipping
-                return false;
-            }
-            
-            // mark as seen and keep
-            seen.add(elementId);
+            state.seen.add(elementId);
             return true;
         });
     
-    // add new elements to all elements
     if (newElements.length > 0) {
-        console.log(`Discovered ${newElements.length} new elements to process`);
-        allElementsToProcess.push(...newElements);
+        console.log(`Discovered ${newElements.length} new elements`);
+        state.elementsToProcess.push(...newElements);
     }
 }
 
-// page scanning function
+// check if the element is valid
+function isValidElement(element) {
+    // skip non-leaf nodes
+    if (element.children.length > 0) return false;
+    
+    // skip hidden elements
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    
+    // skip empty elements
+    const text = element.textContent.trim();
+    return text.length > 0;
+}
+
+// generate an id for the element, identical elements will have the same id
+function getElementId(element) {
+    return element.tagName + 
+           (element.id ? '#' + element.id : '') + 
+           (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
+           ':' + element.textContent.trim().substring(0, 20);
+}
+
+// state management and logging for starting a scan
+async function startScan() {
+    if (state.scanning) return;
+    
+    try {
+        state.scanning = true;
+        // notify popup that scanning has started
+        if (browserAPI.runtime?.id) {
+            browserAPI.runtime.sendMessage({ action: 'scan-started' });
+        }
+        
+        if (!state.discovering) {
+            startElementDiscovery();
+        }
+        
+        await scanPage();
+        console.log('Scan complete');
+    } catch (error) {
+        console.error('Scan error:', error);
+    } finally {
+        // always attempt to reset state, even if extension context is invalid
+        await resetScanState();
+    }
+}
+
+// actual scanning of the page
 async function scanPage() {
     console.clear();
-    
-    // ensure we have elements to scan
-    if (allElementsToProcess.length === 0) {
-        console.log('No elements to scan. Discovering...');
+    if (state.elementsToProcess.length === 0) {
         discoverElements();
+        if (state.elementsToProcess.length === 0) {
+            console.log('No elements found to scan');
+            return;
+        }
+    }
+
+    const elements = state.elementsToProcess.slice(
+        state.currentIndex, 
+        state.currentIndex + CONFIG.MAX_ELEMENTS
+    );
+
+    console.log(`Processing ${elements.length} elements (index: ${state.currentIndex}, total: ${state.elementsToProcess.length})`);
+
+    let stats = { processed: 0, sentences: 0, toxic: 0 };
+    
+    // process elements in batches of 10
+    for (let i = 0; i < elements.length; i += CONFIG.BATCH_SIZE) {
+        const batch = elements.slice(i, i + CONFIG.BATCH_SIZE);
+        await processBatch(batch, stats);
+    }
+    
+    state.currentIndex += elements.length;
+    logStats(stats);
+}
+
+// process a batch of elements for scanning
+async function processBatch(elements, stats) {
+    // process each element in the batch in parallel
+    await Promise.all(elements.map(async (element) => {
+        // check if the element is still connected to the DOM
+        if (!element.isConnected) return;
         
-        if (allElementsToProcess.length === 0) {
-            console.log('Still no elements found to scan');
-            return 0;
+        const text = element.textContent.trim().replace(/\s+/g, ' ');
+        stats.processed++;
+        
+        const [newText, hasToxic, sentenceCount] = await processText(text);
+        
+        stats.sentences += sentenceCount;
+        if (hasToxic) {
+            stats.toxic++;
+            updateElement(element, newText);
+        }
+    }));
+}
+
+// process the text of an element for scanning
+async function processText(text) {
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    let newText = '';
+    let hasToxic = false;
+    let sentenceCount = 0;
+    
+    // process each sentence in the element sequentially
+    for (const sentence of sentences) {
+        if (!sentence.trim()) continue;
+        
+        try {
+            const [transformed, isToxic] = await transformText(sentence);
+            newText += transformed + ' ';
+            hasToxic = hasToxic || isToxic;
+            sentenceCount++;
+        } catch (error) {
+            console.error('Error processing sentence:', error);
+            newText += sentence + ' ';
         }
     }
     
-    // get the next batch of elements to process
-    const elements = allElementsToProcess.slice(index, index + MAX_ELEMENTS);
-    console.log(`Processing ${elements.length} elements (starting at index ${index}, total discovered: ${allElementsToProcess.length})`);
-
-    // scanning counters
-    let processed = 0;
-    let sentenceCount = 0;
-    let elementsWithToxic = 0;
-    
-    // process elements in batches of 10
-    for (let i = 0; i < elements.length; i += 10) {
-        const batch = elements.slice(i, i + 10);
-        
-        // process all elements in current batch
-        await Promise.all(batch.map(async (element) => {
-            // skip if the element is no longer in the DOM
-            if (!element.isConnected) {
-                return;
-            }
-            
-            // trim whitespace
-            const text = element.textContent.trim().replace(/\s+/g, ' ');
-            processed++;
-            
-           // split element text into sentences using lookahead regex
-            const sentences = text.split(/(?<=[.!?])\s+/);
-            let newText = '';
-            let hasToxic = false;
-            
-            // scan each sentence
-            for (let j = 0; j < sentences.length; j++) {
-                const sentence = sentences[j].trim();
-                if (!sentence) continue;
-                
-                try {
-                    // scan for toxicity and transform if toxic
-                    const [transformedSentence, isToxic] = await transformText(sentence);
-                    
-                    if (isToxic) {
-                        hasToxic = true;
-                        console.log(`Negative content found: "${transformedSentence}"`);
-                        newText += transformedSentence;
-                    } else {
-                        newText += sentence;
-                    }
-                    
-                    // add space after each sentence
-                    newText += " ";
-                    sentenceCount++;
-                } catch (error) {
-                    console.error('Error processing:', error);
-                    newText += sentence + " ";
-                }
-            }
-            
-            // update element if toxic content was found and it exists in DOM
-            if (hasToxic && element.isConnected) {
-                elementsWithToxic++;
-                element.textContent = newText.trim();
-                element.classList.add('toxic-filtered');
-            }
-        }));
-    }
-    
-    // update index for subsequent scans
-    index += elements.length;
-    
-    // print scan information
-    console.log(`Processed ${processed} elements and ${sentenceCount} sentences`);
-    console.log(`Found toxic content in ${elementsWithToxic} elements`);
-    console.log(`Next scan will start at index ${index}`);
-    
-    return sentenceCount;
+    return [newText.trim(), hasToxic, sentenceCount];
 }
 
-// start the element discovery as soon as the script loads
-window.addEventListener('load', startElementDiscovery);
+// update the element with the new text
+function updateElement(element, newText) {
+    if (element.isConnected) {
+        element.textContent = newText;
+        element.classList.add('toxic-filtered');
+    }
+}
 
-// highlight transformed content
+// log the stats of the scan
+function logStats(stats) {
+    console.log(`Processed ${stats.processed} elements and ${stats.sentences} sentences`);
+    console.log(`Found toxic content in ${stats.toxic} elements`);
+    console.log(`Next scan will start at index ${state.currentIndex}`);
+}
+
+// reset all states on reload
+async function resetState() {
+    state.currentIndex = 0;
+    state.seen.clear();
+    state.elementsToProcess.length = 0;
+    stopElementDiscovery();
+    startElementDiscovery();
+    resetScanState();
+}
+
+// reset the scanning states on reload
+async function resetScanState() {
+    state.scanning = false;
+    try {
+        // only attempt browser API calls if extension is still valid
+        if (browserAPI.runtime?.id) {
+            // clear scanning state in storage
+            await browserAPI.storage.local.remove(['isScanning']);
+            // notify popup that scanning has been reset
+            browserAPI.runtime.sendMessage({ action: 'scan-finished' });
+        }
+    } catch (error) {
+        console.error('Extension context changed, local state reset only', error);
+    }
+}
+
+// initialize and inject the style for transformed content
 const style = document.createElement('style');
-style.textContent = `
-  .toxic-filtered {
-    background-color: yellow !important;
-    color: black !important;
-  }
-`;
+style.textContent = 
+`.toxic-filtered { 
+background-color: yellow !important; color: black !important; 
+}`
 document.head.appendChild(style);
 
-// call the backend to transform text
+// backend communication for transforming text
 async function transformText(text) {
     try {
-        const response = await axios.post(`${BACKEND_URL}/transform-text`, { text: text });
+        const response = await axios.post(`${CONFIG.BACKEND_URL}/transform-text`, { text });
         return [response.data.transformed, response.data.is_toxic];
     } catch (error) {
         return [text, false];
     }
 }
+
+function main() {
+    // prevent multiple injections of content.js
+    if (window.__toxicityFilterInjected) {
+        console.log("Toxicity filter already injected");
+        return;
+    } else {
+        window.__toxicityFilterInjected = true;
+    }
+
+    // start discovery on load
+    window.addEventListener('load', startElementDiscovery);
+
+    // message handling
+    const messageListener = (request) => {
+        // check if extension is still valid
+        if (!browserAPI.runtime?.id) {
+            browserAPI.runtime.onMessage.removeListener(messageListener);
+            return;
+        }
+
+        switch (request.action) {
+            case 'scan':
+                if (!state.scanning) {
+                    startScan();
+                }
+                break;
+            case 'reset':
+                resetState();
+                break;
+            case 'clear-console':
+                console.clear();
+                break;
+        }
+    };
+
+    browserAPI.runtime.onMessage.addListener(messageListener);
+}
+
+main();

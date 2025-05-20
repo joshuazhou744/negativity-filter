@@ -2,3 +2,4 @@
 /.venv
 
 /backend/__pycache__
+/backend/models/__pycache__
