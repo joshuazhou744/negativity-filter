@@ -23,11 +23,7 @@ class TextTransformer:
         system_prompt: str = SYSTEM_PROMPT,
         max_tokens: int = 350
     ):
+        self.placeholder = None
         # TODO: initialize the object fields
-        # leading underscore access modifier labels the _client field as protected (only a label, not enforced)
-        self._client = None
-        # TODO: initialize the client with a function
-    
-    # TODO: make a protected function to initialize the WatsonX client
     
     # TODO: make a function to transform the text

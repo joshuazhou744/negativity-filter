@@ -3,12 +3,11 @@
 # https://huggingface.co/unitary/toxic-bert
 
 import time
-import numpy as np
-from typing import Dict, Tuple
+from typing import Tuple
 from pydantic import BaseModel
 
-# ToxicBERT is east to use as it's wrapped nicely in a detoxify package
-from detoxify import Detoxify
+# ToxicBERT is easy to use as it's wrapped nicely in a detoxify package
+# TODO: import the detoxify package
 
 # threshold to decide whether or not a text is toxic, configurable
 TOXICITY_THRESHOLD = 0.6
@@ -30,10 +29,6 @@ ZERO_SCORE = ModelOutput(
     insult=0.0,
     identity_attack=0.0
 )
-
-# TODO: toxicity result class
-class ToxicityResult(BaseModel):
-    placeholder: str
 
 class ToxicityDetector:
     def __init__(self, threshold: float = TOXICITY_THRESHOLD, model_type: str = "original"):

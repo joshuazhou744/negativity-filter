@@ -4,7 +4,7 @@
 import sys
 from typing import Tuple
 
-# TODO: import tools
+# TODO: import models
 
 def process_text(text: str) -> Tuple[str, bool]:
     # TODO: check for empty text
@@ -14,8 +14,9 @@ def process_text(text: str) -> Tuple[str, bool]:
     
     # TODO: check toxicity
 
-    # TODO: format scores
+    # TODO: not toxic case, return text as is and False
     
+    # negativity detected, hence we transform the text
     # TODO: transform the text if negative
     transformed_text = "transformed text"
 
