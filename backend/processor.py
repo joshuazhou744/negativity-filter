@@ -4,22 +4,29 @@
 import sys
 from typing import Tuple
 
-# TODO: import models
+# import models
+from tools.text_transformer import TextTransformer
+from tools.toxicity_detector import ToxicityDetector
 
 def process_text(text: str) -> Tuple[str, bool]:
     # check for empty text
     if not text or not text.strip():
         return text, False
     
-    # TODO: get the text transformer
-    # TODO: get the toxicity detector
+    # initialize models
+    text_transformer = TextTransformer()
+    toxicity_detector = ToxicityDetector()
     
-    # TODO: check toxicity
+    # check toxicity
+    is_toxic, scores = toxicity_detector.is_toxic(text)
 
-    # TODO: format scores
+    # not toxic case
+    if not is_toxic:
+        return text, False
     
-    # TODO: transform the text if negative
-    transformed_text = "transformed text"
+    # negativity detected, hence we transform the text
+    # similar to lazy loading where we only transform the text when needed; this improves efficiency
+    transformed_text = text_transformer.transform_text(text)
 
     return transformed_text, True
 
