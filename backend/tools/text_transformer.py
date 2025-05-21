@@ -1,7 +1,5 @@
-import time
-from typing import Optional, Dict, Any, List
+from typing import Optional
 
-import openai
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
