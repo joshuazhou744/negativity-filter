@@ -6,7 +6,7 @@ import time
 from typing import Tuple
 from pydantic import BaseModel
 
-# ToxicBERT is east to use as it's wrapped nicely in a detoxify package
+# ToxicBERT is easy to use as it's wrapped nicely in a detoxify package
 from detoxify import Detoxify
 
 # threshold to decide whether or not a text is toxic, configurable
