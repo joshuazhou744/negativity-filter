@@ -1,118 +1,100 @@
 // content.js
-// handles content of the page
+// handles content scanning and element discovery on the page
 
-// configuration
-const BACKEND_URL = 'configure me';
-const TEXT_SELECTORS = "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr";
-const MAX_ELEMENTS = 100;
-const DISCOVERY_INTERVAL = 1000;
+// configuration for global constants
+const CONFIG = {
+    BACKEND_URL: 'configure me',
+    TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
+    MAX_ELEMENTS: 100,
+    DISCOVERY_INTERVAL: 1000,
+    BATCH_SIZE: 10
+};   
 
-// states
-const seen = new Set();
-const allElementsToProcess = [];
-let scanning = false;
-let discovering = false;
-let index = 0;
-let discoveryTimer = null;
+// state management for logging and debugging
+const state = {
+    // TODO: add state variables here
+};
 
-if (window.__toxicityFilterInjected) {
-    console.log("Toxicity filter already injected");
-}
-window.__toxicityFilterInjected = true;
-
-// process messages from the popup
-chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === 'scan' && !scanning) {
-        // TODO: start scanning page
-       
-        // TODO: discover elements until none left to discover
-        
-        // TODO: run scan and handle completion
-        
-    } else if (request.action === 'reset') {
-        // TODO: reset index, seen set and elements to process
-        
-        // TODO: restart discovery
-        
-        console.log('Reset index and element tracking');
-    } else if (request.action === 'clear-console') {
-        // self-explanatory
-        console.clear();
-    }
-});
-
-// background task for element discovery
+// continuous element discovery functions
 function startElementDiscovery() {
-    if (discovering) return;
-    
-    discovering = true;
-    console.log('Starting element discovery');
-    
-    // initial discovery
-    discoverElements();
-    
-    // set up periodic discovery
-    discoveryTimer = setInterval(discoverElements, DISCOVERY_INTERVAL);
+    // TODO: start element discovery
 }
 
 function stopElementDiscovery() {
-    if (discoveryTimer) {
-        clearInterval(discoveryTimer);
-        discoveryTimer = null;
-    }
-    discovering = false;
-    console.log('Stopped element discovery');
+    // TODO: stop element discovery
 }
 
 function discoverElements() {
-    const body = document.body;
-    if (!body) return;
-    
-    // TODO: get all elements and filter them
-    
-    // TODO: add new elements to all elements
+    // TODO: handle discovering elements
 }
 
-// page scanning function
+// check if the element is valid
+function isValidElement(element) {
+    // TODO: check if the element is valid
+}
+
+// generate a common identifier for the element
+function getElementId(element) {
+    // TODO: generate a common identifier for the element
+}
+
+// state management and logging for starting a scan
+async function startScan() {
+    // TODO: start the scan
+}
+
+// actual scanning of the page
 async function scanPage() {
-    // clear console before scan
-    console.clear();
-    
-    // TODO: ensure we have elements to scan
-    
-    // TODO: get the next batch of elements to process
-
-    // scanning counters
-    let processed = 0;
-    let sentenceCount = 0;
-    let elementsWithToxic = 0;
-    
-    // TODO: process elements in batches of 10
-    
-    // TODO: update index for subsequent scans
-    
-    // print scan information
-    console.log(`Processed ${processed} elements and ${sentenceCount} sentences`);
-    console.log(`Found toxic content in ${elementsWithToxic} elements`);
-    console.log(`Next scan will start at index ${index}`);
-    
-    return sentenceCount;
+    // TODO: scan the page
 }
 
-// start the element discovery as soon as the script loads
-window.addEventListener('load', startElementDiscovery);
+// process a batch of elements for scanning
+async function processBatch(elements, stats) {
+    // TODO: process a batch of elements
+}
 
-// highlight transformed content style
-const style = document.createElement('style');
-style.textContent = `
-  .toxic-filtered {
-    background-color: yellow !important;
-    color: black !important;
-  }
-`;
-document.head.appendChild(style);
+// process the text of an element for scanning
+async function processText(text) {
+    // TODO: process the text of an element after splitting it into sentences
+}
 
-// transform text function
+// update the element with the new text
+function updateElement(element, newText) {
+    // TODO: update the element in DOM with the new text
+}
+
+// log the stats of the scan
+function logStats(stats) {
+    // TODO: log the stats of the scan
+}
+
+// reset all states on reload
+async function resetState() {
+    // TODO: set all states to their initial values
+}
+
+// reset the scanning states on reload
+async function resetScanState() {
+    // TODO: reset the scanning states on reload
+}
+
+// TODO: initialize and inject the style for transformed content
+
+// backend communication for transforming text
 async function transformText(text) {
-    // TODO: call the backend to transform text using axios
+    // TODO: communicate with the backend to transform the text
 }
+
+function main() {
+    // TODO: prevent multiple injections of content.js
+
+    // TODO: start discovery on load
+
+    const messageListener = (request) => {
+        // TODO: handle the message
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+}
+
+main();
