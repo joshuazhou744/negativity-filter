@@ -3,8 +3,7 @@
 # https://huggingface.co/unitary/toxic-bert
 
 import time
-import numpy as np
-from typing import Dict, Tuple
+from typing import Tuple
 from pydantic import BaseModel
 
 # ToxicBERT is east to use as it's wrapped nicely in a detoxify package

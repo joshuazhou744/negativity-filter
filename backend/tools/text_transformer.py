@@ -1,16 +1,18 @@
-# Text transformer using WatsonX and Llama 3
+# text_transformer.py
+# Text transformer using Watsonx.ai and Llama 3
 
-from ibm_watsonx_ai import Credentials, APIClient
+from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
 
 # global variable configuration
 CREDENTIALS = Credentials(
-    url = "https://us-south.ml.cloud.ibm.com"
+    url = "https://us-south.ml.cloud.ibm.com",
+    # api_key = "not needed in CloudIDE"
 )
 MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
 PROJECT_ID = "skills-network"
 SYSTEM_PROMPT = """
-You are a toxicity filter. 
+You are a toxicity filter.
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
 
@@ -33,14 +35,13 @@ NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT, W
 DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR ANYTHING LIKE THAT.
 """
 
-
 class TextTransformer:
     def __init__(
         self,
-        credentials: Credentials,
-        model_id: str,
-        project_id: str,
-        system_prompt: str,
+        credentials: Credentials = CREDENTIALS,
+        model_id: str = MODEL_ID,
+        project_id: str = PROJECT_ID,
+        system_prompt: str = SYSTEM_PROMPT,
         max_tokens: int = 350
     ):
         self.credentials = credentials
@@ -48,30 +49,15 @@ class TextTransformer:
         self.project_id = project_id
         self.system_prompt = system_prompt
         self.max_tokens = max_tokens
-        # leading underscore access modifier labels the _client field as protected (only a label, not enforced)
-        self._client = None
-        self._initialize_client()
-    
-    # protected function to initialize the WatsonX client
-    def _initialize_client(self):
-        
-        # initialize WatsonX client
-        try:
-            self._client = APIClient(self.credentials)
-        except Exception as e:
-            raise
-    
-    def transform_text(
-        self,
-        toxic_text: str
-    ) -> str:
-        
+
+    # public function to transform text
+    def transform_text(self, toxic_text: str) -> str:
         try:
             model = ModelInference(
                 model_id=self.model_id,
                 credentials=self.credentials,
                 project_id=self.project_id,
-                params={"max_tokens": 300},
+                params={"max_tokens": self.max_tokens},
             )
             response = model.chat(
                 messages = [
@@ -92,16 +78,5 @@ class TextTransformer:
             # print(response) uncomment to see the full response; for debugging
             transformed_text = response['choices'][0]['message']['content']
             return transformed_text.strip()
-        
         except Exception as e:
             return "Error transforming text"
-
-# wrapper function to get a TextTransformer object
-def get_text_transformer() -> TextTransformer:
-    return TextTransformer(
-                credentials=CREDENTIALS, 
-                model_id=MODEL_ID, 
-                project_id=PROJECT_ID, 
-                system_prompt=SYSTEM_PROMPT,
-                max_tokens=350
-            )
