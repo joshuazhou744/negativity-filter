@@ -6,11 +6,11 @@ from typing import Tuple
 
 # TODO: import models
 
+# TODO: instantiate the text transformer
+# TODO: instantiate the toxicity detector
+
 def process_text(text: str) -> Tuple[str, bool]:
     # TODO: check for empty text
-    
-    # TODO: initialize the text transformer
-    # TODO: initialize the toxicity detector
     
     # TODO: check toxicity
 
