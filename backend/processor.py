@@ -8,14 +8,14 @@ from typing import Tuple
 from tools.text_transformer import TextTransformer
 from tools.toxicity_detector import ToxicityDetector
 
+# instantiate models at module level
+text_transformer = TextTransformer()
+toxicity_detector = ToxicityDetector()
+
 def process_text(text: str) -> Tuple[str, bool]:
     # check for empty text
     if not text or not text.strip():
         return text, False
-    
-    # initialize models
-    text_transformer = TextTransformer()
-    toxicity_detector = ToxicityDetector()
     
     # check toxicity
     is_toxic, scores = toxicity_detector.is_toxic(text)
