@@ -70,12 +70,7 @@ function logStats(stats) {
 
 // reset all states on reload
 async function resetState() {
-    state.currentIndex = 0;
-    state.seen.clear();
-    state.elementsToProcess.length = 0;
-    stopElementDiscovery();
-    startElementDiscovery();
-    resetScanState();
+    // TODO: set all states to their initial values
 }
 
 // reset the scanning states on reload
