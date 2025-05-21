@@ -1,7 +1,7 @@
 # text_transformer.py
 # Text transformer using Watsonx.ai and Llama 3
 
-from ibm_watsonx_ai import Credentials, APIClient
+from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
 
 # global variable configuration
@@ -12,7 +12,7 @@ CREDENTIALS = Credentials(
 MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
 PROJECT_ID = "skills-network"
 SYSTEM_PROMPT = """
-You are a toxicity filter. 
+You are a toxicity filter.
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
 
@@ -49,17 +49,6 @@ class TextTransformer:
         self.project_id = project_id
         self.system_prompt = system_prompt
         self.max_tokens = max_tokens
-        self._client = None
-        self._initialize_client()
-    
-    # protected function to initialize the WatsonX client
-    def _initialize_client(self):
-        
-        # initialize WatsonX client
-        try:
-            self._client = APIClient(self.credentials)
-        except Exception as e:
-            raise Exception("Error initializing WatsonX client")
 
     # public function to transform text
     def transform_text(self, toxic_text: str) -> str:
@@ -68,7 +57,7 @@ class TextTransformer:
                 model_id=self.model_id,
                 credentials=self.credentials,
                 project_id=self.project_id,
-                params={"max_tokens": 300},
+                params={"max_tokens": self.max_tokens},
             )
             response = model.chat(
                 messages = [
