@@ -3,7 +3,7 @@
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     CONNECTION_CHECK_INTERVAL: 10000
 };
 
@@ -83,17 +83,6 @@ async function setScanningState(scanning) {
     }
 }
 
-// reset scanning state and storage
-async function resetScanState() {
-    try {
-        await chrome.storage.local.remove(['isScanning']);
-        state.isScanning = false;
-        updateButtonState();
-    } catch (error) {
-        console.error('Error resetting scan state:', error);
-    }
-}
-
 // send a message to the content script to scan the current page
 async function startScan() {
     if (!state.isConnected || elements.scanButton.disabled) return;
@@ -142,7 +131,7 @@ function handleContentScriptMessage(msg) {
             setScanningState(false);
             break;
         case 'reset':
-            resetScanState();
+            setScanningState(false)
             break;
     }
 }

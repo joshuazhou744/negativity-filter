@@ -3,7 +3,7 @@
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 1000,
@@ -75,19 +75,10 @@ function isValidElement(element) {
 
 // generate an id for the element, identical elements will have the same id
 function getElementId(element) {
-    // add position-based identification for elements without stable identifiers
-    if (!element.id && !element.className) {
-        const parent = element.parentElement;
-        const index = parent ? Array.from(parent.children).indexOf(element) : -1;
-        return `${baseId}:nth-child(${index})`;
-    }
-    // use only stable properties that won't change after transformation (id and className without toxic-filtered class)
-    const baseId = element.tagName + 
-           (element.id ? '#' + element.id : '') +
-           // remove toxic-filtered class
-           (element.className ? '.' + element.className.replace('toxic-filtered', '').trim().replace(/\s+/g, '.') : '');
-    
-    return baseId;
+    return element.tagName + 
+           (element.id ? '#' + element.id : '') + 
+           (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
+           ':' + element.textContent.trim().substring(0, 20);
 }
 
 // state management and logging for starting a scan
