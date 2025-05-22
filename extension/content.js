@@ -82,21 +82,12 @@ function isValidElement(element) {
     return text.length > 0;
 }
 
-// generate a common identifier for the element
+// generate an id for the element, identical elements will have the same id
 function getElementId(element) {
-    // add position-based identification for elements without stable identifiers
-    if (!element.id && !element.className) {
-        const parent = element.parentElement;
-        const index = parent ? Array.from(parent.children).indexOf(element) : -1;
-        return `${baseId}:nth-child(${index})`;
-    }
-    // use only stable properties that won't change after transformation (id and className without toxic-filtered class)
-    const baseId = element.tagName + 
-           (element.id ? '#' + element.id : '') +
-           // remove toxic-filtered class
-           (element.className ? '.' + element.className.replace('toxic-filtered', '').trim().replace(/\s+/g, '.') : '');
-    
-    return baseId;
+    return element.tagName + 
+           (element.id ? '#' + element.id : '') + 
+           (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
+           ':' + element.textContent.trim().substring(0, 20);
 }
 
 // state management and logging for starting a scan
