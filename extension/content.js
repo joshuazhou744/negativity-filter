@@ -75,10 +75,19 @@ function isValidElement(element) {
 
 // generate an id for the element, identical elements will have the same id
 function getElementId(element) {
-    return element.tagName + 
-           (element.id ? '#' + element.id : '') + 
-           (element.className ? '.' + element.className.replace(/\s+/g, '.') : '') +
-           ':' + element.textContent.trim().substring(0, 20);
+    // add position-based identification for elements without stable identifiers
+    if (!element.id && !element.className) {
+        const parent = element.parentElement;
+        const index = parent ? Array.from(parent.children).indexOf(element) : -1;
+        return `${baseId}:nth-child(${index})`;
+    }
+    // use only stable properties that won't change after transformation (id and className without toxic-filtered class)
+    const baseId = element.tagName + 
+           (element.id ? '#' + element.id : '') +
+           // remove toxic-filtered class
+           (element.className ? '.' + element.className.replace('toxic-filtered', '').trim().replace(/\s+/g, '.') : '');
+    
+    return baseId;
 }
 
 // state management and logging for starting a scan
@@ -87,7 +96,7 @@ async function startScan() {
     
     try {
         state.scanning = true;
-        // Notify popup that scanning has started
+        // notify popup that scanning has started
         if (chrome.runtime?.id) {
             chrome.runtime.sendMessage({ action: 'scan-started' });
         }
@@ -101,7 +110,7 @@ async function startScan() {
     } catch (error) {
         console.error('Scan error:', error);
     } finally {
-        // Always attempt to reset state, even if extension context is invalid
+        // always attempt to reset state, even if extension context is invalid
         await resetScanState();
     }
 }
