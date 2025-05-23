@@ -17,19 +17,21 @@ const elements = {
     // TODO: add elements of the UI here
 };
 
-// UI updates
-function updateStatus() {
-    // TODO: update the status of the UI here
-}
-
-// update the button state based on the connection and scan state
-function updateButtonState() {
-    // TODO: update the button state of the UI here
-}
-
 // check backend connection
 async function checkConnection() {
     // TODO: check the connection to the backend here
+}
+
+/* UI updates */
+
+// update the connection status indicator
+function updateConnectionStatus() {
+    // TODO: update the status of the UI here
+}
+
+// update the scan button state based on the connection and scan state
+function updateButtonState() {
+    // TODO: update the button state of the UI here
 }
 
 // check the previous scan state when popup opens
@@ -40,11 +42,6 @@ async function checkPreviousScanState() {
 // set scan state
 async function setScanningState(scanning) {
     // TODO: set the scan state
-}
-
-// reset scanning state and storage
-async function resetScanState() {
-    // TODO: reset the scanning state and storage
 }
 
 // send a message to the content script to scan the current page
@@ -58,16 +55,14 @@ async function clearConsole() {
 }
 
 // message handling from the content script
-function handleContentScriptMessage(msg) {
+const messageListener = (request) => {
     // TODO: handle the message from the content script
 }
 
 function initialize() {
-    // TODO: initialize the popup before the checks
-    
-    // TODO: check the previous scan state
-    
     // TODO: set up periodic connection checking
+
+    // TODO: check the previous scan state
 
     // TODO: set up event listeners for the scan and clear console buttons 
 
