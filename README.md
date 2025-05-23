@@ -1,3 +1,3 @@
-# Toxicity Filter
+# Negativity Filter
 
-Final version of the project.
+Main branch
