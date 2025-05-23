@@ -163,6 +163,13 @@ async function processBatch(elements, stats) {
     }));
 }
 
+// log the stats of the scan
+function logStats(stats) {
+    console.log(`Processed ${stats.processed} elements`);
+    console.log(`Found toxic content in ${stats.toxic} elements`);
+    console.log(`Next scan will start at index ${state.currentIndex}`);
+}
+
 // process the text of an element for scanning
 async function processText(text) {
     const sentences = text.split(/(?<=[.!?])\s+/);
@@ -190,44 +197,90 @@ async function processText(text) {
 function updateElement(element, newText) {
     if (element.isConnected) {
         element.textContent = newText;
-        element.classList.add('toxic-filtered');
+        element.classList.add('toxic-transformed');
     }
 }
 
-// log the stats of the scan
-function logStats(stats) {
-    console.log(`Processed ${stats.processed} elements`);
-    console.log(`Found toxic content in ${stats.toxic} elements`);
-    console.log(`Next scan will start at index ${state.currentIndex}`);
+// backend communication for transforming text
+async function transformText(text) {
+    try {
+        const response = await axios.post(`${CONFIG.BACKEND_URL}/transform-text`, { text: text });
+        return [response.data.transformed, response.data.is_toxic];
+    } catch (error) {
+        return [text, false];
+    }
 }
 
 // reset all states on reload
 async function resetState() {
-    
+    state.currentIndex = 0;
+    state.seen.clear();
+    state.elementsToProcess.length = 0;
+    stopElementDiscovery();
+    startElementDiscovery();
+    resetScanState();
 }
 
 // reset the scanning states on reload
 async function resetScanState() {
-    // TODO: reset the scanning states on reload
+    state.scanning = false;
+    try {
+        if (chrome.runtime?.id) {
+            // reset scanning state in local tab storage
+            await chrome.storage.local.set({ isScanning: false });
+            // notify popup that scanning has been reset
+            chrome.runtime.sendMessage({ action: 'scan-finished' });
+        }
+    } catch (error) {
+        console.error('Extension context changed, local state reset only', error);
+    }
 }
 
-// TODO: initialize and inject the style for transformed content
+// message handling
+const messageListener = (request) => {
+    // check if extension is still valid, if not, remove the listener
+    if (!chrome.runtime?.id) {
+        chrome.runtime.onMessage.removeListener(messageListener);
+        return;
+    }
 
-// backend communication for transforming text
-async function transformText(text) {
-    // TODO: communicate with the backend to transform the text
-}
+    switch (request.action) {
+        case 'scan':
+            if (!state.scanning) {
+                startScan();
+            }
+            break;
+        case 'reset':
+            resetState();
+            break;
+        case 'clear-console':
+            console.clear();
+            break;
+    }
+};
 
 function main() {
-    // TODO: prevent multiple injections of content.js
+    // prevent multiple injections of content.js
+    if (window.__toxicityFilterInjected) {
+        console.log("Toxicity filter already injected");
+        return;
+    } else {
+        window.__toxicityFilterInjected = true;
+    }
 
-    // TODO: start discovery on load
+    // initialize and inject the style for transformed content
+    const style = document.createElement('style');
+    style.textContent = 
+    `.toxic-transformed { 
+    background-color: yellow !important; color: black !important; 
+    }`
+    document.head.appendChild(style);
 
-    const messageListener = (request) => {
-        // TODO: handle the message
-    };
+    // start discovery on load
+    window.addEventListener('load', startElementDiscovery);
 
+    // add message listener
     chrome.runtime.onMessage.addListener(messageListener);
 }
 
-main();
+document.addEventListener('DOMContentLoaded', main);
