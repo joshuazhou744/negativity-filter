@@ -15,7 +15,8 @@ const state = {
     // TODO: add state variables here
 };
 
-// continuous element discovery functions
+/* element discovery functions */
+
 function startElementDiscovery() {
     // TODO: start element discovery
 }
@@ -38,6 +39,8 @@ function getElementId(element) {
     // TODO: generate a common identifier for the element
 }
 
+/* scanning functions */
+
 // state management and logging for starting a scan
 async function startScan() {
     // TODO: start the scan
@@ -53,6 +56,11 @@ async function processBatch(elements, stats) {
     // TODO: process a batch of elements
 }
 
+// log the stats of the scan
+function logStats(stats) {
+    // TODO: log the stats of the scan
+}
+
 // process the text of an element for scanning
 async function processText(text) {
     // TODO: process the text of an element after splitting it into sentences
@@ -63,10 +71,12 @@ function updateElement(element, newText) {
     // TODO: update the element in DOM with the new text
 }
 
-// log the stats of the scan
-function logStats(stats) {
-    // TODO: log the stats of the scan
+// backend communication for transforming text
+async function transformText(text) {
+    // TODO: communicate with the backend to transform the text
 }
+
+/* reset functions */
 
 // reset all states on reload
 async function resetState() {
@@ -78,22 +88,22 @@ async function resetScanState() {
     // TODO: reset the scanning states on reload
 }
 
+// message handling
+const messageListener = (request) => {
+    // TODO: handle the message
+};
+
 // TODO: initialize and inject the style for transformed content
 
-// backend communication for transforming text
-async function transformText(text) {
-    // TODO: communicate with the backend to transform the text
-}
 
 function main() {
     // TODO: prevent multiple injections of content.js
 
+    // TODO: initialize and inject the style for transformed content
+
     // TODO: start discovery on load
 
-    const messageListener = (request) => {
-        // TODO: handle the message
-    };
-
+    // add message listener
     chrome.runtime.onMessage.addListener(messageListener);
 }
 
