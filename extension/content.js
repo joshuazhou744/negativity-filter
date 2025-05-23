@@ -124,7 +124,7 @@ async function scanPage() {
 
     console.log(`Processing ${elements.length} elements (index: ${state.currentIndex}, total: ${state.elementsToProcess.length})`);
 
-    let stats = { processed: 0, sentences: 0, toxic: 0 };
+    let stats = { processed: 0, toxic: 0 };
     
     // process elements in batches of 10
     for (let i = 0; i < elements.length; i += CONFIG.BATCH_SIZE) {
@@ -146,9 +146,8 @@ async function processBatch(elements, stats) {
         const text = element.textContent.trim().replace(/\s+/g, ' ');
         stats.processed++;
         
-        const [newText, hasToxic, sentenceCount] = await processText(text);
+        const [newText, hasToxic] = await processText(text);
         
-        stats.sentences += sentenceCount;
         if (hasToxic) {
             stats.toxic++;
             updateElement(element, newText);
@@ -161,7 +160,6 @@ async function processText(text) {
     const sentences = text.split(/(?<=[.!?])\s+/);
     let newText = '';
     let hasToxic = false;
-    let sentenceCount = 0;
     
     // process each sentence in the element sequentially
     for (const sentence of sentences) {
@@ -171,14 +169,13 @@ async function processText(text) {
             const [transformed, isToxic] = await transformText(sentence);
             newText += transformed + ' ';
             hasToxic = hasToxic || isToxic;
-            sentenceCount++;
         } catch (error) {
             console.error('Error processing sentence:', error);
             newText += sentence + ' ';
         }
     }
     
-    return [newText.trim(), hasToxic, sentenceCount];
+    return [newText.trim(), hasToxic];
 }
 
 // update the element with the new text
@@ -191,10 +188,11 @@ function updateElement(element, newText) {
 
 // log the stats of the scan
 function logStats(stats) {
-    console.log(`Processed ${stats.processed} elements and ${stats.sentences} sentences`);
+    console.log(`Processed ${stats.processed} elements`);
     console.log(`Found toxic content in ${stats.toxic} elements`);
     console.log(`Next scan will start at index ${state.currentIndex}`);
 }
+
 
 // reset all states on reload
 async function resetState() {
