@@ -1,3 +1,3 @@
-# Negativity Filter
+# Negativity Filter - OBSOLETE
 
 OpenAI backend for testing
