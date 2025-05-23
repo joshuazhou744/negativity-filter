@@ -44,6 +44,8 @@ function updateConnectionStatus() {
     elements.statusText.textContent = state.isConnected 
         ? 'Connected to backend' 
         : 'Backend not available';
+    // update the scan button state
+    updateScanButton();
 }
 
 // update the scan button state based on the connection and scan state
@@ -96,7 +98,7 @@ async function setScanningState(scanning) {
 
 // send a message to the content script to scan the current page
 async function startScan() {
-    if (!state.isConnected || !state.isScanning) return;
+    if (!state.isConnected || state.isScanning) return;
 
     try {
         // get the active and current window tab
