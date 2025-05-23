@@ -283,4 +283,4 @@ function main() {
     chrome.runtime.onMessage.addListener(messageListener);
 }
 
-document.addEventListener('DOMContentLoaded', main);
+main();
