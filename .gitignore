@@ -2,4 +2,4 @@
 /.venv
 
 /backend/__pycache__
-/backend/models/__pycache__
+/backend/tools/__pycache__
