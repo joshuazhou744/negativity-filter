@@ -92,32 +92,113 @@ function getElementId(element) {
 
 // state management and logging for starting a scan
 async function startScan() {
-    // TODO: start the scan
+    if (state.scanning) return;
+    
+    try {
+        state.scanning = true;
+        // notify popup that scanning has started
+        if (chrome.runtime?.id) {
+            chrome.runtime.sendMessage({ action: 'scan-started' });
+        }
+        
+        if (!state.discovering) {
+            startElementDiscovery();
+        }
+        
+        await scanPage();
+        console.log('Scan complete');
+    } catch (error) {
+        console.error('Scan error:', error);
+    } finally {
+        // always attempt to reset state, even if extension context is invalid
+        await resetScanState();
+    }
 }
 
 // actual scanning of the page
 async function scanPage() {
-    // TODO: scan the page
+    console.clear();
+    if (state.elementsToProcess.length === 0) {
+        discoverElements();
+        if (state.elementsToProcess.length === 0) {
+            console.log('No elements found to scan');
+            return;
+        }
+    }
+
+    const elements = state.elementsToProcess.slice(
+        state.currentIndex, 
+        state.currentIndex + CONFIG.MAX_ELEMENTS
+    );
+
+    console.log(`Processing ${elements.length} elements (index: ${state.currentIndex}, total: ${state.elementsToProcess.length})`);
+    let stats = { processed: 0, toxic: 0 };
+    
+    // process elements in batches of 10
+    for (let i = 0; i < elements.length; i += CONFIG.BATCH_SIZE) {
+        const batch = elements.slice(i, i + CONFIG.BATCH_SIZE);
+        await processBatch(batch, stats);
+    }
+    
+    state.currentIndex += elements.length;
+    logStats(stats);
 }
 
 // process a batch of elements for scanning
 async function processBatch(elements, stats) {
-    // TODO: process a batch of elements
+    // process each element in the batch in parallel
+    await Promise.all(elements.map(async (element) => {
+        // check if the element is still connected to the DOM
+        if (!element.isConnected) return;
+        
+        const text = element.textContent.trim().replace(/\s+/g, ' ');
+        stats.processed++;
+        
+        const [newText, hasToxic] = await processText(text);
+        
+        if (hasToxic) {
+            stats.toxic++;
+            updateElement(element, newText);
+        }
+    }));
 }
 
 // process the text of an element for scanning
 async function processText(text) {
-    // TODO: process the text of an element after splitting it into sentences
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    let newText = '';
+    let hasToxic = false;
+    
+    // process each sentence in the element sequentially
+    for (const sentence of sentences) {
+        if (!sentence.trim()) continue;
+        
+        try {
+            const [transformed, isToxic] = await transformText(sentence);
+            newText += transformed + ' ';
+            hasToxic = hasToxic || isToxic;
+        } catch (error) {
+            console.error('Error processing sentence:', error);
+            newText += sentence + ' ';
+        }
+    }
+    
+    return [newText.trim(), hasToxic];
 }
 
 // update the element with the new text
 function updateElement(element, newText) {
-    // TODO: update the element in DOM with the new text
+    if (element.isConnected) {
+        element.textContent = newText;
+        element.classList.add('toxic-filtered');
+    }
 }
 
 // log the stats of the scan
 function logStats(stats) {
-    // TODO: log the stats of the scan
+    console.log(`Processed ${stats.processed} elements`);
+    console.log(`Found toxic content in ${stats.toxic} elements`);
+    console.log(`Next scan will start at index ${state.currentIndex}`);
 }
 
 // reset all states on reload
