@@ -3,7 +3,7 @@
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     CONNECTION_CHECK_INTERVAL: 10000
 };
 

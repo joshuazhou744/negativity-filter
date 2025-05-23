@@ -3,10 +3,10 @@
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'https://joshuazhou-8000.theianext-0-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
-    DISCOVERY_INTERVAL: 1000,
+    DISCOVERY_INTERVAL: 5000, // 5 seconds
     BATCH_SIZE: 10
 };   
 
@@ -20,19 +20,23 @@ const state = {
     discoveryTimer: null
 };
 
-// continuous element discovery functions
+/* element discovery functions */
+
 function startElementDiscovery() {
+    // prevent multiple discoveries
     if (state.discovering) return;
     
     state.discovering = true;
     console.log('Starting element discovery');
     
     discoverElements();
+    // start the periodic discovery timer
     state.discoveryTimer = setInterval(discoverElements, CONFIG.DISCOVERY_INTERVAL);
 }
 
 function stopElementDiscovery() {
     if (state.discoveryTimer) {
+        // stop and disable the periodic discovery timer
         clearInterval(state.discoveryTimer);
         state.discoveryTimer = null;
     }
@@ -40,12 +44,16 @@ function stopElementDiscovery() {
 }
 
 function discoverElements() {
+    // skip if the document body is not available
     if (!document.body) return;
     
+    // get new elements to process
     const newElements = Array.from(document.body.querySelectorAll(CONFIG.TEXT_SELECTORS))
         .filter(element => {
+            // skip if the element is not valid
             if (!isValidElement(element)) return false;
             
+            // skip if the element has already been seen
             const elementId = getElementId(element);
             if (state.seen.has(elementId)) return false;
             
@@ -53,6 +61,7 @@ function discoverElements() {
             return true;
         });
     
+    // add new elements to the list of elements to process
     if (newElements.length > 0) {
         console.log(`Discovered ${newElements.length} new elements`);
         state.elementsToProcess.push(...newElements);
@@ -123,7 +132,6 @@ async function scanPage() {
     );
 
     console.log(`Processing ${elements.length} elements (index: ${state.currentIndex}, total: ${state.elementsToProcess.length})`);
-
     let stats = { processed: 0, toxic: 0 };
     
     // process elements in batches of 10
@@ -155,6 +163,13 @@ async function processBatch(elements, stats) {
     }));
 }
 
+// log the stats of the scan
+function logStats(stats) {
+    console.log(`Processed ${stats.processed} elements`);
+    console.log(`Found toxic content in ${stats.toxic} elements`);
+    console.log(`Next scan will start at index ${state.currentIndex}`);
+}
+
 // process the text of an element for scanning
 async function processText(text) {
     const sentences = text.split(/(?<=[.!?])\s+/);
@@ -182,17 +197,19 @@ async function processText(text) {
 function updateElement(element, newText) {
     if (element.isConnected) {
         element.textContent = newText;
-        element.classList.add('toxic-filtered');
+        element.classList.add('toxic-transformed');
     }
 }
 
-// log the stats of the scan
-function logStats(stats) {
-    console.log(`Processed ${stats.processed} elements`);
-    console.log(`Found toxic content in ${stats.toxic} elements`);
-    console.log(`Next scan will start at index ${state.currentIndex}`);
+// backend communication for transforming text
+async function transformText(text) {
+    try {
+        const response = await axios.post(`${CONFIG.BACKEND_URL}/transform-text`, { text: text });
+        return [response.data.transformed, response.data.is_toxic];
+    } catch (error) {
+        return [text, false];
+    }
 }
-
 
 // reset all states on reload
 async function resetState() {
@@ -208,9 +225,8 @@ async function resetState() {
 async function resetScanState() {
     state.scanning = false;
     try {
-        // only attempt chrome API calls if extension is still valid
         if (chrome.runtime?.id) {
-            // clear scanning state in storage
+            // reset scanning state in local tab storage
             await chrome.storage.local.set({ isScanning: false });
             // notify popup that scanning has been reset
             chrome.runtime.sendMessage({ action: 'scan-finished' });
@@ -220,23 +236,28 @@ async function resetScanState() {
     }
 }
 
-// initialize and inject the style for transformed content
-const style = document.createElement('style');
-style.textContent = 
-`.toxic-filtered { 
-background-color: yellow !important; color: black !important; 
-}`
-document.head.appendChild(style);
-
-// backend communication for transforming text
-async function transformText(text) {
-    try {
-        const response = await axios.post(`${CONFIG.BACKEND_URL}/transform-text`, { text });
-        return [response.data.transformed, response.data.is_toxic];
-    } catch (error) {
-        return [text, false];
+// message handling
+const messageListener = (request) => {
+    // check if extension is still valid, if not, remove the listener
+    if (!chrome.runtime?.id) {
+        chrome.runtime.onMessage.removeListener(messageListener);
+        return;
     }
-}
+
+    switch (request.action) {
+        case 'scan':
+            if (!state.scanning) {
+                startScan();
+            }
+            break;
+        case 'reset':
+            resetState();
+            break;
+        case 'clear-console':
+            console.clear();
+            break;
+    }
+};
 
 function main() {
     // prevent multiple injections of content.js
@@ -247,32 +268,18 @@ function main() {
         window.__toxicityFilterInjected = true;
     }
 
+    // initialize and inject the style for transformed content
+    const style = document.createElement('style');
+    style.textContent = 
+    `.toxic-transformed { 
+    background-color: yellow !important; color: black !important; 
+    }`
+    document.head.appendChild(style);
+
     // start discovery on load
     window.addEventListener('load', startElementDiscovery);
 
-    // message handling
-    const messageListener = (request) => {
-        // Check if extension is still valid
-        if (!chrome.runtime?.id) {
-            chrome.runtime.onMessage.removeListener(messageListener);
-            return;
-        }
-
-        switch (request.action) {
-            case 'scan':
-                if (!state.scanning) {
-                    startScan();
-                }
-                break;
-            case 'reset':
-                resetState();
-                break;
-            case 'clear-console':
-                console.clear();
-                break;
-        }
-    };
-
+    // add message listener
     chrome.runtime.onMessage.addListener(messageListener);
 }
 
