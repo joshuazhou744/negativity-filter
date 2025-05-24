@@ -1,18 +1,15 @@
 # app.py
 # FastAPI backend for text processing
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import uvicorn
 from pydantic import BaseModel
 from processor import process_text
 
-
-# initialize FastAPI app
 app = FastAPI()
 
-# request schema
 class TextRequest(BaseModel):
     text: str
 
