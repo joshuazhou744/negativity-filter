@@ -1,20 +1,25 @@
+# app.py
+# FastAPI backend for text processing
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import uvicorn
 
-# get the parent directory so we can import the processor function
+import uvicorn
+from pydantic import BaseModel
 from processor import process_text
 
+
+# initialize FastAPI app
 app = FastAPI()
 
+# request schema
 class TextRequest(BaseModel):
     text: str
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    # typically allowing all origins (*) isn't recommended, however it's required within this context
+    # typically allowing all origins (*) isn't recommended, however it's required for this project
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,5 +37,6 @@ async def transform_text(data: TextRequest):
 async def health():
     return {"status": "ok"}
 
+# run the app
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
