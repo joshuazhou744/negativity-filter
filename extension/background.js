@@ -1,7 +1,7 @@
 // background.js
 // handles the background tasks
 
-// Firefox compatibility
+// detect if the browser is Firefox or Chrome
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // reset the extension when the tab is updated

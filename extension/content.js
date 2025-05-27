@@ -1,7 +1,7 @@
 // content.js
 // handles content scanning and element discovery on the page
 
-// Firefox compatibility
+// detect if the browser is Firefox or Chrome
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration for global constants
