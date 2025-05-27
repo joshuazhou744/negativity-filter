@@ -12,7 +12,7 @@ browserAPI.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             if (browserAPI.runtime.lastError) return;
         });
         
-        // send reset to popup
+        // send reset to popup script
         browserAPI.runtime.sendMessage({ action: 'reset' }, () => {
             if (browserAPI.runtime.lastError) return;
         });
