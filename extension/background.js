@@ -1,7 +1,20 @@
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+// background.js
+// handles the background tasks
+
+// detect if the browser is Firefox or Chrome
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
+// reset the extension when the tab is updated
+browserAPI.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
-        chrome.tabs.sendMessage(tabId, { action: 'reset' }, () => {
-            if (chrome.runtime.lastError) {};
+        // send reset to content script
+        browserAPI.tabs.sendMessage(tabId, { action: 'reset' }, () => {
+            if (browserAPI.runtime.lastError) return;
+        });
+
+        // send reset to popup script
+        browserAPI.runtime.sendMessage({ action: 'reset' }, () => {
+            if (browserAPI.runtime.lastError) return;
         });
     }
 });
