@@ -108,12 +108,11 @@ async function startScan() {
         // get the active and current window tab
         const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
         
-        /* if the tab is a chrome:// page, alert the user and return
-        if (tab.url.startsWith('chrome://')) {
-            alert('Cannot scan chrome:// pages');
+        // if the tab is a about: page, alert the user and return
+        if (tab.url.startsWith('about:')) {
+            alert('Cannot scan about: pages');
             return;
         }
-        */
 
         // set the scanning state to true
         await setScanningState(true);
@@ -136,12 +135,12 @@ async function clearConsole() {
         // get the active and current window tab
         const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
 
-        /* if the tab is a chrome:// page, alert the user and return
-        if (tab.url.startsWith('chrome://')) {
-            alert('Cannot scan chrome:// pages');
+        // if the tab is a about: page, alert the user and return
+        if (tab.url.startsWith('about:')) {
+            alert('Cannot scan about: pages');
             return;
         }
-        */
+
         // send a message to the content script to clear the console
         browserAPI.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
             // if there is an error, return
