@@ -1,6 +1,9 @@
 // popup.js
 // handles the popup UI and interactions with the backend
 
+// detect if the browser is Firefox or Chrome
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 // configuration for global constants
 const CONFIG = {
     BACKEND_URL: 'configure me',
@@ -66,7 +69,7 @@ function updateScanButton() {
 async function checkPreviousScanState() {
     try {
         // get the previous scan state from local storage
-        const { isScanning } = await chrome.storage.local.get(['isScanning']);
+        const { isScanning } = await browserAPI.storage.local.get(['isScanning']);
         // set the scan state
         state.isScanning = isScanning || false;
         // update the button state
@@ -84,14 +87,14 @@ async function setScanningState(scanning) {
     try {
         // update the local and stored scan state
         state.isScanning = scanning;
-        await chrome.storage.local.set({ isScanning: scanning });
+        await browserAPI.storage.local.set({ isScanning: scanning });
         // update the button state
         updateScanButton();
     } catch (error) {
         // if error, set the scan state to false
         console.error('Error setting scan state:', error);
         state.isScanning = false;
-        await chrome.storage.local.set({ isScanning: false });
+        await browserAPI.storage.local.set({ isScanning: false });
         updateScanButton();
     }
 }
@@ -102,7 +105,7 @@ async function startScan() {
 
     try {
         // get the active and current window tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
         
         // if the tab is a chrome:// page, alert the user and return
         if (tab.url.startsWith('chrome://')) {
@@ -113,9 +116,9 @@ async function startScan() {
         // set the scanning state to true
         await setScanningState(true);
         // send a message to the content script to scan the current page
-        chrome.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
+        browserAPI.tabs.sendMessage(tab.id, { action: 'scan' }, () => {
             // if there is an error, return
-            if (chrome.runtime.lastError) return;
+            if (browserAPI.runtime.lastError) return;
         });
 
     } catch (err) {
@@ -129,16 +132,18 @@ async function startScan() {
 async function clearConsole() {
     try {
         // get the active and current window tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
+
         // if the tab is a chrome:// page, alert the user and return
         if (tab.url.startsWith('chrome://')) {
             alert('Cannot scan chrome:// pages');
             return;
         }
+
         // send a message to the content script to clear the console
-        chrome.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
+        browserAPI.tabs.sendMessage(tab.id, { action: 'clear-console' }, () => {
             // if there is an error, return
-            if (chrome.runtime.lastError) return;
+            if (browserAPI.runtime.lastError) return;
         });
     } catch (err) {
         // if error, log the error
@@ -174,7 +179,7 @@ function initialize() {
     elements.clearButton.addEventListener('click', clearConsole);
 
     // listen for content script messages
-    chrome.runtime.onMessage.addListener(messageListener);
+    browserAPI.runtime.onMessage.addListener(messageListener);
 }
 
 // start everything when the DOM is loaded
