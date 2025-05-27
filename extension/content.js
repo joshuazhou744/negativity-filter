@@ -1,6 +1,9 @@
 // content.js
 // handles content scanning and element discovery on the page
 
+// detect if the browser is Firefox or Chrome
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 // configuration for global constants
 const CONFIG = {
     BACKEND_URL: 'configure me',
@@ -97,8 +100,8 @@ async function startScan() {
     try {
         state.scanning = true;
         // notify popup that scanning has started
-        if (chrome.runtime?.id) {
-            chrome.runtime.sendMessage({ action: 'scan-started' });
+        if (browserAPI.runtime?.id) {
+            browserAPI.runtime.sendMessage({ action: 'scan-started' });
         }
         
         if (!state.discovering) {
@@ -225,11 +228,11 @@ async function resetState() {
 async function resetScanState() {
     state.scanning = false;
     try {
-        if (chrome.runtime?.id) {
+        if (browserAPI.runtime?.id) {
             // reset scanning state in local tab storage
-            await chrome.storage.local.set({ isScanning: false });
+            await browserAPI.storage.local.set({ isScanning: false });
             // notify popup that scanning has been reset
-            chrome.runtime.sendMessage({ action: 'scan-finished' });
+            browserAPI.runtime.sendMessage({ action: 'scan-finished' });
         }
     } catch (error) {
         console.error('Extension context changed, local state reset only', error);
@@ -239,8 +242,8 @@ async function resetScanState() {
 // message handling
 const messageListener = (request) => {
     // check if extension is still valid, if not, remove the listener
-    if (!chrome.runtime?.id) {
-        chrome.runtime.onMessage.removeListener(messageListener);
+    if (!browserAPI.runtime?.id) {
+        browserAPI.runtime.onMessage.removeListener(messageListener);
         return;
     }
 
@@ -280,7 +283,7 @@ function main() {
     window.addEventListener('load', startElementDiscovery);
 
     // add message listener
-    chrome.runtime.onMessage.addListener(messageListener);
+    browserAPI.runtime.onMessage.addListener(messageListener);
 }
 
 main();
