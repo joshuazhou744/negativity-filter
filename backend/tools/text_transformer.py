@@ -1,16 +1,18 @@
-from typing import Optional
+# text_transformer.py
+# Text transformer using Watsonx.ai and Llama 3
 
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
+from ibm_watsonx_ai import Credentials
+from ibm_watsonx_ai.foundation_models import ModelInference
 
-load_dotenv()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = "gpt-4o-mini"
-MAX_TOKENS = 200
+# global variable configuration
+CREDENTIALS = Credentials(
+    url = "https://us-south.ml.cloud.ibm.com",
+    # api_key = "not needed in CloudIDE"
+)
+MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
+PROJECT_ID = "skills-network"
 SYSTEM_PROMPT = """
-You are a toxicity filter. 
+You are a toxicity filter.
 You are given text either with context or independently,
 You will transform the text into a positive alternative.
 
@@ -29,57 +31,52 @@ Original: "You are horrible"
 Transformed: "You are lovely!"
 
 ***
-NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH TO THE ORIGINAL TEXT, WITHIN A FEW CHARACTERS LENGTH.
+NOTE THAT THE TRANSFORMED TEXT SHOULD BE THE SAME LENGTH AS THE ORIGINAL TEXT, WITHIN A FEW CHARACTERS LENGTH.
 DO NOT ADD ANY HEADER OR FOOTER TO THE TEXT. NOTHING LIKE "Transformed text:" OR ANYTHING LIKE THAT.
 """
-
 
 class TextTransformer:
     def __init__(
         self,
-        api_key: str = OPENAI_API_KEY,
-        model: str = OPENAI_MODEL,
-        max_tokens: int = MAX_TOKENS,
-        system_prompt: str = SYSTEM_PROMPT
+        credentials: Credentials = CREDENTIALS,
+        model_id: str = MODEL_ID,
+        project_id: str = PROJECT_ID,
+        system_prompt: str = SYSTEM_PROMPT,
+        max_tokens: int = 350
     ):
-        self.api_key = api_key
-        self.model = model
-        self.max_tokens = max_tokens
+        self.credentials = credentials
+        self.model_id = model_id
+        self.project_id = project_id
         self.system_prompt = system_prompt
-        self._client = None
-        self._initialize_client()
-        
-    def _initialize_client(self):
-        if not self.api_key:
-            raise ValueError("OpenAI API key is required")
-        
-        try:
-            self._client = OpenAI(api_key=self.api_key)
-        except Exception as e:
-            raise
-    
-    def transform_text(
-        self,
-        toxic_text: str,
-        context: Optional[str] = None,
-    ) -> str:
-        if not toxic_text or not toxic_text.strip():
-            return ""
-        
-        try:
+        self.max_tokens = max_tokens
 
-            response = self._client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": f"Original text: {toxic_text}\nContext: {context if context else 'no context'}"}
-                ],
-                max_tokens=self.max_tokens,
-                temperature=0.5
+    # public function to transform text
+    def transform_text(self, toxic_text: str) -> str:
+        try:
+            model = ModelInference(
+                model_id=self.model_id,
+                credentials=self.credentials,
+                project_id=self.project_id,
+                params={"max_tokens": self.max_tokens},
             )
-            return response.choices[0].message.content.strip()
+            response = model.chat(
+                messages = [
+                    {
+                        "role":"system",
+                        "content": [
+                            {"type": "text", "text": self.system_prompt}
+                        ]
+                    },
+                    {
+                        "role":"user",
+                        "content": [
+                            {"type": "text", "text": f"Original text: {toxic_text}"}
+                        ]
+                    }
+                ]
+            )
+            # print(response) uncomment to see the full response; for debugging
+            transformed_text = response['choices'][0]['message']['content']
+            return transformed_text.strip()
         except Exception as e:
             return "Error transforming text"
-
-def get_text_transformer() -> TextTransformer:
-    return TextTransformer()
