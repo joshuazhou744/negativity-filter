@@ -108,9 +108,9 @@ async function startScan() {
         // get the active and current window tab
         const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
         
-        // if the tab is a about: page, alert the user and return
-        if (tab.url.startsWith('about:')) {
-            alert('Cannot scan about: pages');
+        // if the tab is an internal page, alert the user and return
+        if ((tab.url.startsWith('chrome://')) || tab.url.startsWith('about:')) {
+            alert('Cannot scan browser internal pages');
             return;
         }
 
@@ -135,9 +135,9 @@ async function clearConsole() {
         // get the active and current window tab
         const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
 
-        // if the tab is a about: page, alert the user and return
-        if (tab.url.startsWith('about:')) {
-            alert('Cannot scan about: pages');
+        // if the tab is an internal page, alert the user and return
+        if ((tab.url.startsWith('chrome://')) || tab.url.startsWith('about:')) {
+            alert('Cannot clear console in browser internal pages');
             return;
         }
 
