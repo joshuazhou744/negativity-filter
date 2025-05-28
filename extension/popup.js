@@ -2,7 +2,6 @@
 // handles the popup UI and interactions with the backend
 
 // detect if the browser is Firefox or Chrome
-
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration for global constants
