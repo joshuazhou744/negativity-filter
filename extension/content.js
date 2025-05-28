@@ -113,7 +113,7 @@ async function startScan() {
     } catch (error) {
         console.error('Scan error:', error);
     } finally {
-        // always attempt to reset state, even if extension context is invalid
+        // reset the scanning state
         await resetScanState();
     }
 }
@@ -218,10 +218,10 @@ async function transformText(text) {
 async function resetState() {
     state.currentIndex = 0;
     state.seen.clear();
-    state.elementsToProcess.length = 0;
+    state.elementsToProcess = [];
     stopElementDiscovery();
     startElementDiscovery();
-    resetScanState();
+    await resetScanState();
 }
 
 // reset the scanning states on reload
@@ -254,6 +254,7 @@ const messageListener = (request) => {
             }
             break;
         case 'reset':
+            console.log('Resetting state');
             resetState();
             break;
         case 'clear-console':
