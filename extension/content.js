@@ -254,7 +254,6 @@ const messageListener = (request) => {
             }
             break;
         case 'reset':
-            console.log('Resetting state');
             resetState();
             break;
         case 'clear-console':
