@@ -164,6 +164,7 @@ async function processBatch(elements, stats) {
         elements.forEach((element, i) => {
           const { transformed, is_toxic } = batchResults[i];
           if (!is_toxic) return;
+          stats.toxic++;
           updateElement(element, transformed);
         });
       });
