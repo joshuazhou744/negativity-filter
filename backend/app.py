@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import uvicorn
 from pydantic import BaseModel
+from typing import List
 from processor import process_text
 
 
@@ -13,8 +14,8 @@ from processor import process_text
 app = FastAPI()
 
 # request schema
-class TextRequest(BaseModel):
-    text: str
+class BatchRequest(BaseModel):
+    texts: List[str]
 
 # CORS middleware
 app.add_middleware(
@@ -26,11 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# transform text
-@app.post("/transform-text")
-async def transform_text(data: TextRequest):
-    transformed, is_toxic = process_text(data.text)
-    return {"transformed": transformed, "is_toxic": is_toxic}
+# transform text in batches
+@app.post("/transform-text-batch")
+async def transform_text_batch(data: BatchRequest):
+    results = []
+    for t in data.texts:
+        transformed, toxic = process_text(t)
+        results.append({"original": t, "transformed": transformed, "is_toxic": toxic})
+    return results
 
 # check API health
 @app.get("/health")
