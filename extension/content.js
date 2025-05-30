@@ -61,19 +61,14 @@ function logStats(stats) {
     // TODO: log the stats of the scan
 }
 
-// process the text of an element for scanning
-async function processText(text) {
-    // TODO: process the text of an element after splitting it into sentences
-}
-
 // update the element with the new text
 function updateElement(element, newText) {
     // TODO: update the element in DOM with the new text
 }
 
 // backend communication for transforming text
-async function transformText(text) {
-    // TODO: communicate with the backend to transform the text
+async function transformTextBatch(texts) {
+    // TODO: communicate with the backend to transform the text in batches
 }
 
 /* reset functions */
