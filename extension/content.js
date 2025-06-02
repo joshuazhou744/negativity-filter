@@ -6,7 +6,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'configure me',
+    BACKEND_URL: 'http://localhost:8000',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 5000, // 5 seconds
