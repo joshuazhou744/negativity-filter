@@ -160,14 +160,17 @@ async function processBatch(elements, stats) {
     // transform the text of the elements
     const batchResults = await transformTextBatch(texts);
     // update the elements with the transformed text if they are toxic
-    requestAnimationFrame(() => {
-        elements.forEach((element, i) => {
-          const { transformed, is_toxic } = batchResults[i];
-          if (!is_toxic) return;
-          stats.toxic++;
-          updateElement(element, transformed);
+    await new Promise(resolve => {
+        requestAnimationFrame(() => {
+            elements.forEach((element, i) => {
+            const { transformed, is_toxic } = batchResults[i];
+            if (!is_toxic) return;
+            stats.toxic++;
+            updateElement(element, transformed);
+            });
+        resolve();
         });
-      });
+    });
 }
 
 // log the stats of the scan
