@@ -6,7 +6,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'http://localhost:8000',
+    BACKEND_URL: 'configure me',
     CONNECTION_CHECK_INTERVAL: 10000
 };
 

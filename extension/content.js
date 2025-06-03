@@ -6,7 +6,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // configuration for global constants
 const CONFIG = {
-    BACKEND_URL: 'http://localhost:8000',
+    BACKEND_URL: 'configure me',
     TEXT_SELECTORS: "p, div, span, h1, h2, h3, h4, h5, h6, a, li, ol, ul, textarea, input, button, td, th, tr",
     MAX_ELEMENTS: 100,
     DISCOVERY_INTERVAL: 5000, // 5 seconds
@@ -144,7 +144,7 @@ async function scanPage() {
     }
 
     state.currentIndex += elements.length;
-    logStats(stats);
+    await logStats(stats);
 }
 
 // process a batch of elements for scanning
@@ -160,18 +160,21 @@ async function processBatch(elements, stats) {
     // transform the text of the elements
     const batchResults = await transformTextBatch(texts);
     // update the elements with the transformed text if they are toxic
-    requestAnimationFrame(() => {
-        elements.forEach((element, i) => {
-          const { transformed, is_toxic } = batchResults[i];
-          if (!is_toxic) return;
-          stats.toxic++;
-          updateElement(element, transformed);
+    await new Promise(resolve => {
+        requestAnimationFrame(() => {
+            elements.forEach((element, i) => {
+            const { transformed, is_toxic } = batchResults[i];
+            if (!is_toxic) return;
+            stats.toxic++;
+            updateElement(element, transformed);
+            });
+        resolve();
         });
-      });
+    });
 }
 
 // log the stats of the scan
-function logStats(stats) {
+async function logStats(stats) {
     console.log(`Processed ${stats.processed} elements`);
     console.log(`Found toxic content in ${stats.toxic} elements`);
     console.log(`Next scan will start at index ${state.currentIndex}`);
@@ -191,9 +194,10 @@ async function transformTextBatch(texts) {
         const response = await axios.post(`${CONFIG.BACKEND_URL}/transform-text-batch`, { texts: texts });
         return response.data;
     } catch (error) {
-        return texts.map(text => [text, false]);
+        return texts.map(text => ({ transformed: text, is_toxic: false }));
     }
 }
+
 // reset all states on reload
 async function resetState() {
     state.currentIndex = 0;
@@ -258,9 +262,6 @@ function main() {
     background-color: yellow !important; color: black !important; 
     }`
     document.head.appendChild(style);
-
-    // start discovery on load
-    window.addEventListener('load', startElementDiscovery);
 
     // add message listener
     browserAPI.runtime.onMessage.addListener(messageListener);
